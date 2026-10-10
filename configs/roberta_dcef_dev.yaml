@@ -1,0 +1,99 @@
+# DCEF development stage (train-holdout evaluation, fresh seeds 361-363).
+#
+# Question: at identical delivered bytes, does delay-consistent error feedback
+# remove the reach-then-lose behaviour of standard bidirectional EF, and does
+# the gap grow as the budget (and hence the transmission delay d/K) shrinks?
+#
+# Matched pairs share model construction, initial state, partitions, minibatch
+# seeds, learning rates and message cap; they differ only in the sync rule:
+#   full_lora_ef           standard bidirectional Top-k + EF
+#   full_lora_dcef         client virtual start + server discount (1 - gamma_bar)
+#   full_lora_dcef_client  client virtual start, ordinary server EF (ablation)
+# fedavg_lora is the dense reference for C95 and retention.
+# Fixed-A arms (random_a_ef / random_a_dcef) are opt-in diagnostics:
+#   run_matrix.py --include-diagnostics
+#
+# Seeds 401-403 have been observed and are not used. Seeds 371-373 are reserved
+# for an official-validation confirmation after this stage is frozen.
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_dcef
+  output_dir: /data/home/202412012250/bishe_dcef/docs/results/dcef_dev
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 90
+
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+    - attention.self.query
+    - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-5
+
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks: [sst2, rte, mnli]
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds: [361, 362, 363]
+
+training:
+  rounds:
+    sst2: 30
+    rte: 50
+    mnli: 50
+  local_steps:
+    sst2: 8
+    rte: 8
+    mnli: 16
+  batch_size:
+    sst2: 128
+    rte: 16
+    mnli: 128
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora: &full_lora_lr
+      learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+      head_learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+    full_lora_ef: *full_lora_lr
+    full_lora_dcef: *full_lora_lr
+    full_lora_dcef_client: *full_lora_lr
+    random_a_ef: &fixed_a_lr
+      learning_rate: {sst2: 0.0003, rte: 0.0003, mnli: 0.001}
+      head_learning_rate: {sst2: 0.0003, rte: 0.0003, mnli: 0.001}
+    random_a_dcef: *fixed_a_lr
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every: {sst2: 1, rte: 1, mnli: 5}
+  checkpoint_every: 1
+
+evaluation:
+  policy: train_holdout
+
+communication:
+  wire_ratios: [0.05, 0.10, 0.20]
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+
+matrix:
+  dense_methods: [fedavg_lora]
+  sparse_methods: [full_lora_ef, full_lora_dcef, full_lora_dcef_client]
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: [random_a_ef, random_a_dcef]

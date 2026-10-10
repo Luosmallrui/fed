@@ -1,0 +1,72 @@
+# DRAFT ONLY — execution is not authorized. See TASK_SUITE_V2_PLAN.md before
+# any future launch.
+project:
+  phase: final
+  expected_runs: 18
+  root: /data/home/202422011138/bishe
+  output_dir: /data/home/202422011138/bishe/docs/results/task_suite_v2/full_lora_mrpc_qqp
+  tokenized_dir: /data/home/202422011138/bishe/artifacts/tokenized
+  partition_dir: /data/home/202422011138/bishe/artifacts/partitions-task-suite-v2
+  spectral_cache: /data/home/202422011138/bishe/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+
+metrics:
+  mrpc: glue_accuracy_f1_mean
+  qqp: glue_accuracy_f1_mean
+  positive_label: 1
+
+model:
+  path: /data/home/202422011138/bishe/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes: [attention.self.query, attention.self.value]
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-5
+
+data:
+  root: /data/home/202422011138/bishe/datasets
+  tasks: [mrpc, qqp]
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds: [401, 402, 403]
+
+training:
+  rounds: {mrpc: 50, qqp: 50}
+  local_steps: {mrpc: 8, qqp: 16}
+  batch_size: {mrpc: 16, qqp: 128}
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora: &full_lora_lr
+      learning_rate: {mrpc: 0.0003, qqp: 0.001}
+      head_learning_rate: {mrpc: 0.0003, qqp: 0.001}
+    full_lora_ef: *full_lora_lr
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every: {mrpc: 1, qqp: 5}
+  checkpoint_every: 1
+
+evaluation:
+  policy: official_validation
+
+communication:
+  wire_ratios: [0.10, 0.20]
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+
+matrix:
+  dense_methods: [fedavg_lora]
+  sparse_methods: [full_lora_ef]
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

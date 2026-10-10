@@ -1,0 +1,94 @@
+project:
+  phase: smoke
+  root: /data/home/202422011138/bishe
+  output_dir: /data/home/202422011138/bishe/docs/results/stability_v4/smoke
+  tokenized_dir: /data/home/202422011138/bishe/artifacts/tokenized
+  partition_dir: /data/home/202422011138/bishe/artifacts/partitions-stability-v4-smoke
+  spectral_cache: /data/home/202422011138/bishe/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 10
+
+stability:
+  generation: 4
+  stage: smoke
+  protocol_sha256: d22a2fd4d45717bb507f5572b9a6eabbc78332b6217cefcd36b1464fdc9df04c
+  diagnostic_recipe_version: v1
+  metric_schema: glue-task-primary-v1
+  candidate: hybrid4_a_decay_ef
+  controls: [fedavg_lora, hybrid4_a_dense, hybrid4_a_decay_dense, hybrid4_a_ef]
+  winner: null
+
+metrics:
+  sst2: accuracy
+  mnli: mean_matched_mismatched_accuracy
+  mrpc: glue_accuracy_f1_mean
+  qqp: glue_accuracy_f1_mean
+  positive_label: 1
+
+model:
+  path: /data/home/202422011138/bishe/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes: [attention.self.query, attention.self.value]
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-5
+
+data:
+  root: /data/home/202422011138/bishe/datasets
+  tasks: [mrpc, qqp]
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 2
+  clients_per_round: 2
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds: [311]
+
+training:
+  rounds: {mrpc: 2, qqp: 2}
+  local_steps: {mrpc: 1, qqp: 1}
+  batch_size: {mrpc: 16, qqp: 16}
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora:
+      learning_rate: {mrpc: 0.0003, qqp: 0.001}
+      head_learning_rate: {mrpc: 0.0003, qqp: 0.001}
+    hybrid4_a_dense: &hybrid_lr
+      learning_rate: {mrpc: 0.0003, qqp: 0.001}
+      head_learning_rate: {mrpc: 0.0003, qqp: 0.001}
+    hybrid4_a_decay_dense: *hybrid_lr
+    hybrid4_a_ef: *hybrid_lr
+    hybrid4_a_decay_ef: *hybrid_lr
+  schedule_overrides:
+    hybrid4_a_decay_dense: &late_decay
+      name: late_cosine_v1
+      start_fraction: 0.8
+      final_multiplier: 0.1
+      apply_to: [adapter, head]
+    hybrid4_a_decay_ef: *late_decay
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every: {mrpc: 1, qqp: 1}
+  checkpoint_every: 1
+
+evaluation:
+  policy: train_holdout
+
+communication:
+  wire_ratios: [0.10]
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+
+matrix:
+  dense_methods: [fedavg_lora, hybrid4_a_dense, hybrid4_a_decay_dense]
+  sparse_methods: [hybrid4_a_ef, hybrid4_a_decay_ef]
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

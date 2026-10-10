@@ -1,0 +1,73 @@
+# Implementation smoke for delay-consistent error feedback (DCEF).
+# Three rounds so the client secant estimate of gamma and the server discount
+# are exercised; checks wire caps, EF ledgers and checkpoint state only.
+# No result from this config may be used as method evidence.
+project:
+  phase: smoke
+  root: /data/home/202412012250/bishe_dcef
+  output_dir: /data/home/202412012250/bishe_dcef/docs/results/exploration/dcef_smoke
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions-smoke
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes: [attention.self.query, attention.self.value]
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-5
+
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks: [sst2]
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 2
+  clients_per_round: 2
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds: [311]
+
+training:
+  rounds: {sst2: 3}
+  local_steps: {sst2: 2}
+  batch_size: {sst2: 16}
+  eval_batch_size: 512
+  learning_rate: 0.001
+  head_learning_rate: 0.001
+  method_overrides:
+    full_lora_ef: &full_lora_lr
+      learning_rate: 0.001
+      head_learning_rate: 0.001
+    full_lora_dcef: *full_lora_lr
+    full_lora_dcef_client: *full_lora_lr
+    random_a_ef: &fixed_a_lr
+      learning_rate: 0.0003
+      head_learning_rate: 0.0003
+    random_a_dcef: *fixed_a_lr
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every: 1
+  checkpoint_every: 1
+
+evaluation:
+  policy: official_validation
+
+communication:
+  wire_ratios: [0.10]
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+
+matrix:
+  dense_methods: []
+  sparse_methods: [full_lora_ef, full_lora_dcef, full_lora_dcef_client]
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: [random_a_ef, random_a_dcef]

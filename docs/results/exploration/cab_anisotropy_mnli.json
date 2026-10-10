@@ -1,0 +1,1514 @@
+{
+  "medians": {
+    "random": {
+      "common_mode": 0.6593788834818067,
+      "mean_capture": 0.009380805766604597,
+      "energy_gain": 0.9368907801546147,
+      "var_gain": 1.019716818389286,
+      "fisher": 0.003616948898412445,
+      "overlap_top_second": 0.01038477572434228,
+      "overlap_top_cov": 0.01067126356593947
+    },
+    "spectral": {
+      "common_mode": 0.19291725406651616,
+      "mean_capture": 0.006652447068611694,
+      "energy_gain": 1.3394794476243213,
+      "var_gain": 1.9407383229088806,
+      "fisher": 0.004394120689190138,
+      "overlap_top_second": 0.03691915724636537,
+      "overlap_top_cov": 0.043342387077275814
+    },
+    "cab0": {
+      "common_mode": 0.9188302281953635,
+      "mean_capture": 0.9978226244195549,
+      "energy_gain": 74.04500223087203,
+      "var_gain": 18.99134551587349,
+      "fisher": 0.005920452103258018,
+      "overlap_top_second": 0.6029294445248815,
+      "overlap_top_cov": 0.5170828552636981
+    },
+    "cab_05": {
+      "common_mode": 0.013477826303101823,
+      "mean_capture": 0.00031284655404577213,
+      "energy_gain": 1.0537981486943861,
+      "var_gain": 3.6380037494587225,
+      "fisher": 0.01847043093888541,
+      "overlap_top_second": 0.07439039114925154,
+      "overlap_top_cov": 0.08713815321620082
+    },
+    "cab_10": {
+      "common_mode": 0.13755948059867895,
+      "mean_capture": 0.005359780593965108,
+      "energy_gain": 2.0084855949747125,
+      "var_gain": 5.311137889519355,
+      "fisher": 0.01487185998272799,
+      "overlap_top_second": 0.16680904763367838,
+      "overlap_top_cov": 0.17261000632299311
+    },
+    "cab_20": {
+      "common_mode": 0.9295688806162291,
+      "mean_capture": 0.9801585300184181,
+      "energy_gain": 70.76471965523294,
+      "var_gain": 15.132578004229995,
+      "fisher": 0.007603742357444167,
+      "overlap_top_second": 0.4804246839562307,
+      "overlap_top_cov": 0.44293054896146994
+    }
+  },
+  "per_layer": [
+    {
+      "name": "encoder.encoder.layer.0.attention.self.query",
+      "input_common_mode": 0.18018410190586018,
+      "random": {
+        "common_mode": 0.17281107802418044,
+        "mean_capture": 0.009478028165325985,
+        "energy_gain": 0.9487113973480331,
+        "var_gain": 0.9572436444119535,
+        "fisher": 0.0034299657637732774,
+        "overlap_top_second": 0.008359508071093952,
+        "overlap_top_cov": 0.007663026799248409
+      },
+      "spectral": {
+        "common_mode": 0.2573633094791842,
+        "mean_capture": 0.13060483332618142,
+        "energy_gain": 8.778095859608959,
+        "var_gain": 7.951707296003061,
+        "fisher": 0.004452783568716403,
+        "overlap_top_second": 0.3542323581465471,
+        "overlap_top_cov": 0.3454737321119491
+      },
+      "cab0": {
+        "common_mode": 0.6007961029060565,
+        "mean_capture": 0.9632419472382411,
+        "energy_gain": 27.732944499472026,
+        "var_gain": 13.504372808354566,
+        "fisher": 0.004728646448602904,
+        "overlap_top_second": 0.5294363033642989,
+        "overlap_top_cov": 0.5013164521080641
+      },
+      "cab_05": {
+        "common_mode": 0.13633595080797511,
+        "mean_capture": 0.027096230413584776,
+        "energy_gain": 3.4378441758353984,
+        "var_gain": 3.6217185203357345,
+        "fisher": 0.0059109718412397325,
+        "overlap_top_second": 0.08317701973476571,
+        "overlap_top_cov": 0.09158612845774325
+      },
+      "cab_10": {
+        "common_mode": 0.5085863969049654,
+        "mean_capture": 0.5126159800315959,
+        "energy_gain": 17.434725058478325,
+        "var_gain": 10.450713483204865,
+        "fisher": 0.0068765968902938955,
+        "overlap_top_second": 0.36880784680440204,
+        "overlap_top_cov": 0.3586235652510422
+      },
+      "cab_20": {
+        "common_mode": 0.6135626509032912,
+        "mean_capture": 0.9420119224793174,
+        "energy_gain": 26.55737749147478,
+        "var_gain": 12.51837465048481,
+        "fisher": 0.005698082501371232,
+        "overlap_top_second": 0.4849300135961622,
+        "overlap_top_cov": 0.4530808645826996
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.0.attention.self.value",
+      "input_common_mode": 0.18018410190586018,
+      "random": {
+        "common_mode": 0.15301099263017007,
+        "mean_capture": 0.008844462080845269,
+        "energy_gain": 0.9998537832508524,
+        "var_gain": 1.0329943166012658,
+        "fisher": 0.003237046200111346,
+        "overlap_top_second": 0.00957392488317369,
+        "overlap_top_cov": 0.009576152505337884
+      },
+      "spectral": {
+        "common_mode": 0.027054091640370315,
+        "mean_capture": 0.0034069489053621268,
+        "energy_gain": 2.1783134153444026,
+        "var_gain": 2.5851915405778794,
+        "fisher": 0.003757645113263173,
+        "overlap_top_second": 0.046415918011683356,
+        "overlap_top_cov": 0.04103321183014877
+      },
+      "cab0": {
+        "common_mode": 0.6262390039056751,
+        "mean_capture": 0.9956642444840523,
+        "energy_gain": 27.501760815011668,
+        "var_gain": 12.538285169222553,
+        "fisher": 0.005768156029946386,
+        "overlap_top_second": 0.4609806408204775,
+        "overlap_top_cov": 0.4392631175740009
+      },
+      "cab_05": {
+        "common_mode": 0.012072008078216694,
+        "mean_capture": 0.0026486390379549555,
+        "energy_gain": 3.7951676101042344,
+        "var_gain": 4.573407669664794,
+        "fisher": 0.004412402576114513,
+        "overlap_top_second": 0.13322269338461543,
+        "overlap_top_cov": 0.12598018520158777
+      },
+      "cab_10": {
+        "common_mode": 0.03087521483239601,
+        "mean_capture": 0.011207818918260915,
+        "energy_gain": 6.279120534674803,
+        "var_gain": 7.422704723529815,
+        "fisher": 0.006723041454377773,
+        "overlap_top_second": 0.23524870030670508,
+        "overlap_top_cov": 0.252476998913187
+      },
+      "cab_20": {
+        "common_mode": 0.6313451268494862,
+        "mean_capture": 0.9818994843262911,
+        "energy_gain": 26.902206487743292,
+        "var_gain": 12.097386185439749,
+        "fisher": 0.006197422204975648,
+        "overlap_top_second": 0.4393269400016078,
+        "overlap_top_cov": 0.41446794188708713
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.1.attention.self.query",
+      "input_common_mode": 0.4965298884649966,
+      "random": {
+        "common_mode": 0.5522340411236101,
+        "mean_capture": 0.013022101297279765,
+        "energy_gain": 1.1240212558972036,
+        "var_gain": 0.9996590540593873,
+        "fisher": 0.002500853450512227,
+        "overlap_top_second": 0.009091723675680112,
+        "overlap_top_cov": 0.009261049664753
+      },
+      "spectral": {
+        "common_mode": 0.3705772265703507,
+        "mean_capture": 0.023144720716618827,
+        "energy_gain": 2.9770754868669194,
+        "var_gain": 3.721847765580664,
+        "fisher": 0.004335457809663872,
+        "overlap_top_second": 0.23832888822785392,
+        "overlap_top_cov": 0.22526055289878347
+      },
+      "cab0": {
+        "common_mode": 0.8750506591843443,
+        "mean_capture": 0.9682328553789431,
+        "energy_gain": 52.7428080623439,
+        "var_gain": 13.089514052907838,
+        "fisher": 0.00346332696855352,
+        "overlap_top_second": 0.4759512824680214,
+        "overlap_top_cov": 0.4361724356018123
+      },
+      "cab_05": {
+        "common_mode": 0.13451495426950466,
+        "mean_capture": 0.006255082478484951,
+        "energy_gain": 2.216558006771873,
+        "var_gain": 3.8103509302793532,
+        "fisher": 0.0017223777116083707,
+        "overlap_top_second": 0.12271195427983703,
+        "overlap_top_cov": 0.12099882416355234
+      },
+      "cab_10": {
+        "common_mode": 0.8276879762399608,
+        "mean_capture": 0.522634890932926,
+        "energy_gain": 30.09874463447595,
+        "var_gain": 10.301258171593766,
+        "fisher": 0.0029711772344565798,
+        "overlap_top_second": 0.38197222764302274,
+        "overlap_top_cov": 0.37426735252673604
+      },
+      "cab_20": {
+        "common_mode": 0.8691472556700542,
+        "mean_capture": 0.9071081120277524,
+        "energy_gain": 49.74876642391932,
+        "var_gain": 12.929789603104819,
+        "fisher": 0.0026482796216912787,
+        "overlap_top_second": 0.46980321253127577,
+        "overlap_top_cov": 0.4445928647894788
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.1.attention.self.value",
+      "input_common_mode": 0.4965298884649966,
+      "random": {
+        "common_mode": 0.6034189589635635,
+        "mean_capture": 0.01701055197471056,
+        "energy_gain": 1.3437425946425117,
+        "var_gain": 1.0584597275170733,
+        "fisher": 0.002194057985711164,
+        "overlap_top_second": 0.01150741721326241,
+        "overlap_top_cov": 0.012030955941077864
+      },
+      "spectral": {
+        "common_mode": 0.1199546075697671,
+        "mean_capture": 0.002290916598893544,
+        "energy_gain": 0.9103512094463286,
+        "var_gain": 1.5912570955283656,
+        "fisher": 0.002678361155179405,
+        "overlap_top_second": 0.02597418140816942,
+        "overlap_top_cov": 0.020504591664573253
+      },
+      "cab0": {
+        "common_mode": 0.8727214685829091,
+        "mean_capture": 0.9983697906004552,
+        "energy_gain": 54.52961113875811,
+        "var_gain": 13.785225111627344,
+        "fisher": 0.005404058280585942,
+        "overlap_top_second": 0.5152106277677062,
+        "overlap_top_cov": 0.4616620444791661
+      },
+      "cab_05": {
+        "common_mode": 0.005548356467549221,
+        "mean_capture": 0.00021534789886003158,
+        "energy_gain": 1.850090239775073,
+        "var_gain": 3.6542889785817105,
+        "fisher": 0.005835201368550201,
+        "overlap_top_second": 0.13309172276519166,
+        "overlap_top_cov": 0.13442488486933474
+      },
+      "cab_10": {
+        "common_mode": 0.043217428351494974,
+        "mean_capture": 0.0022396076193831557,
+        "energy_gain": 2.470185934981574,
+        "var_gain": 4.694282336077306,
+        "fisher": 0.00580395992193088,
+        "overlap_top_second": 0.17368829142832376,
+        "overlap_top_cov": 0.16946625220998765
+      },
+      "cab_20": {
+        "common_mode": 0.8749363046811889,
+        "mean_capture": 0.9953427574611939,
+        "energy_gain": 54.226659549310114,
+        "var_gain": 13.47008744442697,
+        "fisher": 0.005675448474746394,
+        "overlap_top_second": 0.5088767851433321,
+        "overlap_top_cov": 0.45055865867615885
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.10.attention.self.query",
+      "input_common_mode": 0.738472893785665,
+      "random": {
+        "common_mode": 0.6796339319399268,
+        "mean_capture": 0.007332651278033541,
+        "energy_gain": 0.7648772958166026,
+        "var_gain": 0.9369611255835282,
+        "fisher": 0.0026789838058106437,
+        "overlap_top_second": 0.009672060178191253,
+        "overlap_top_cov": 0.01011576625529173
+      },
+      "spectral": {
+        "common_mode": 0.5503183028182734,
+        "mean_capture": 0.010251830337400224,
+        "energy_gain": 1.3206667534052983,
+        "var_gain": 2.2708149670576017,
+        "fisher": 0.005610457717754434,
+        "overlap_top_second": 0.03592157217180752,
+        "overlap_top_cov": 0.04954250217452719
+      },
+      "cab0": {
+        "common_mode": 0.9194956703905354,
+        "mean_capture": 0.9978457552227371,
+        "energy_gain": 76.93421334046943,
+        "var_gain": 23.682200130835138,
+        "fisher": 0.005682634042230771,
+        "overlap_top_second": 0.6137738496467857,
+        "overlap_top_cov": 0.5150226638819134
+      },
+      "cab_05": {
+        "common_mode": 0.03505867158773592,
+        "mean_capture": 0.0004569866008050103,
+        "energy_gain": 0.9240890032193103,
+        "var_gain": 3.4095573619310375,
+        "fisher": 0.02824507461396381,
+        "overlap_top_second": 0.06940903128043815,
+        "overlap_top_cov": 0.07815667664016646
+      },
+      "cab_10": {
+        "common_mode": 0.5143909798761221,
+        "mean_capture": 0.027937757373322623,
+        "energy_gain": 3.850383511156194,
+        "var_gain": 7.149472920873118,
+        "fisher": 0.0152352893652931,
+        "overlap_top_second": 0.22927468391167088,
+        "overlap_top_cov": 0.23564673452902712
+      },
+      "cab_20": {
+        "common_mode": 0.9259217633423747,
+        "mean_capture": 0.9885248083893863,
+        "energy_gain": 75.6866133340781,
+        "var_gain": 21.438431126833233,
+        "fisher": 0.00740164363750319,
+        "overlap_top_second": 0.5544302837406365,
+        "overlap_top_cov": 0.4582540155214766
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.10.attention.self.value",
+      "input_common_mode": 0.738472893785665,
+      "random": {
+        "common_mode": 0.6515797328613498,
+        "mean_capture": 0.0067692987860501624,
+        "energy_gain": 0.736515529085381,
+        "var_gain": 0.9812250099436416,
+        "fisher": 0.005731052433808413,
+        "overlap_top_second": 0.009460645815315158,
+        "overlap_top_cov": 0.010309815159628222
+      },
+      "spectral": {
+        "common_mode": 0.06345452826988335,
+        "mean_capture": 0.00018804509138547324,
+        "energy_gain": 0.2100898995241408,
+        "var_gain": 0.7523455098161613,
+        "fisher": 0.004271377543096464,
+        "overlap_top_second": 0.0017739325648402876,
+        "overlap_top_cov": 0.002458825107017827
+      },
+      "cab0": {
+        "common_mode": 0.9156870795858211,
+        "mean_capture": 0.9982430015760122,
+        "energy_gain": 77.2849587953364,
+        "var_gain": 24.915660462300348,
+        "fisher": 0.008551159994617388,
+        "overlap_top_second": 0.6242311874338637,
+        "overlap_top_cov": 0.5385832939485469
+      },
+      "cab_05": {
+        "common_mode": 0.009286596657958095,
+        "mean_capture": 0.00010416961079095022,
+        "energy_gain": 0.7952254123691467,
+        "var_gain": 3.0124620201572525,
+        "fisher": 0.04114232149171668,
+        "overlap_top_second": 0.06539072427772812,
+        "overlap_top_cov": 0.07610462235168589
+      },
+      "cab_10": {
+        "common_mode": 0.12827312789994616,
+        "mean_capture": 0.002629329250908612,
+        "energy_gain": 1.4531655038944513,
+        "var_gain": 4.843717493342468,
+        "fisher": 0.03259933739329165,
+        "overlap_top_second": 0.15992980383903296,
+        "overlap_top_cov": 0.17537978276833982
+      },
+      "cab_20": {
+        "common_mode": 0.9222621219895673,
+        "mean_capture": 0.986182242357118,
+        "energy_gain": 75.80687566705313,
+        "var_gain": 22.533288186684924,
+        "fisher": 0.009514282275468073,
+        "overlap_top_second": 0.5815235646609936,
+        "overlap_top_cov": 0.49644852219774144
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.11.attention.self.query",
+      "input_common_mode": 0.74757570586111,
+      "random": {
+        "common_mode": 0.647470752661858,
+        "mean_capture": 0.007007986217581023,
+        "energy_gain": 0.7767826134022721,
+        "var_gain": 1.0848345282383351,
+        "fisher": 0.007801783245744499,
+        "overlap_top_second": 0.01215739021929993,
+        "overlap_top_cov": 0.012676309678971874
+      },
+      "spectral": {
+        "common_mode": 0.7355115123204544,
+        "mean_capture": 0.030813574560209063,
+        "energy_gain": 3.006623307921697,
+        "var_gain": 3.1503197996336043,
+        "fisher": 0.0038267990251675595,
+        "overlap_top_second": 0.03791674232092322,
+        "overlap_top_cov": 0.04797116877413095
+      },
+      "cab0": {
+        "common_mode": 0.9659359077381269,
+        "mean_capture": 0.6814083488396022,
+        "energy_gain": 50.62739156410591,
+        "var_gain": 6.832052925416046,
+        "fisher": 0.005182451691036122,
+        "overlap_top_second": 0.14876174548154816,
+        "overlap_top_cov": 0.06809910567387767
+      },
+      "cab_05": {
+        "common_mode": 0.6990783670963988,
+        "mean_capture": 0.008437690526152177,
+        "energy_gain": 0.8662118923862743,
+        "var_gain": 1.0326339546144216,
+        "fisher": 0.0029405661621843904,
+        "overlap_top_second": 0.009663782629458991,
+        "overlap_top_cov": 0.009938414769949399
+      },
+      "cab_10": {
+        "common_mode": 0.7932574952312093,
+        "mean_capture": 0.017934449530280144,
+        "energy_gain": 1.6225581848936634,
+        "var_gain": 1.3289201993111075,
+        "fisher": 0.0038319003024499484,
+        "overlap_top_second": 0.016625951626355193,
+        "overlap_top_cov": 0.015738477690662025
+      },
+      "cab_20": {
+        "common_mode": 0.966663473513642,
+        "mean_capture": 0.6842885093609341,
+        "energy_gain": 50.80311610380618,
+        "var_gain": 6.709336085742095,
+        "fisher": 0.005294234849145087,
+        "overlap_top_second": 0.14562192299072027,
+        "overlap_top_cov": 0.06492226643657113
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.11.attention.self.value",
+      "input_common_mode": 0.74757570586111,
+      "random": {
+        "common_mode": 0.7674650770207542,
+        "mean_capture": 0.012717899767016306,
+        "energy_gain": 1.1892774606779033,
+        "var_gain": 1.0955702329013013,
+        "fisher": 0.004557231174264689,
+        "overlap_top_second": 0.012061992623454953,
+        "overlap_top_cov": 0.01161799556827197
+      },
+      "spectral": {
+        "common_mode": 0.1259144061330508,
+        "mean_capture": 0.0002219152015443469,
+        "energy_gain": 0.12648471433054584,
+        "var_gain": 0.4379866328550554,
+        "fisher": 0.002543755248322524,
+        "overlap_top_second": 0.00065509975460895,
+        "overlap_top_cov": 0.0006657326346063098
+      },
+      "cab0": {
+        "common_mode": 0.9086202404730177,
+        "mean_capture": 0.9986396288778966,
+        "energy_gain": 78.87743905724524,
+        "var_gain": 28.554309472246466,
+        "fisher": 0.008261549078882654,
+        "overlap_top_second": 0.624362359436238,
+        "overlap_top_cov": 0.5357225965647101
+      },
+      "cab_05": {
+        "common_mode": 0.009715416457294698,
+        "mean_capture": 0.00014867501839686416,
+        "energy_gain": 1.0982545011640434,
+        "var_gain": 4.308557165701019,
+        "fisher": 0.026492844647769267,
+        "overlap_top_second": 0.10773368776667011,
+        "overlap_top_cov": 0.11669171793328106
+      },
+      "cab_10": {
+        "common_mode": 0.06848814782420529,
+        "mean_capture": 0.0013997748785761841,
+        "energy_gain": 1.4667942076063403,
+        "var_gain": 5.412855342427213,
+        "fisher": 0.023406135471516896,
+        "overlap_top_second": 0.14990666181639598,
+        "overlap_top_cov": 0.1690978358238447
+      },
+      "cab_20": {
+        "common_mode": 0.9410322752694287,
+        "mean_capture": 0.9432308032166058,
+        "energy_gain": 71.93493719124551,
+        "var_gain": 16.804403036065846,
+        "fisher": 0.012073891138925413,
+        "overlap_top_second": 0.4348091533435293,
+        "overlap_top_cov": 0.3520776012384144
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.2.attention.self.query",
+      "input_common_mode": 0.6752553611948937,
+      "random": {
+        "common_mode": 0.6671780341022636,
+        "mean_capture": 0.009519461321827264,
+        "energy_gain": 0.9249322199020973,
+        "var_gain": 0.9479379271130034,
+        "fisher": 0.004799892518219018,
+        "overlap_top_second": 0.010329239883256222,
+        "overlap_top_cov": 0.008733830775393189
+      },
+      "spectral": {
+        "common_mode": 0.523951919420026,
+        "mean_capture": 0.02036517180502284,
+        "energy_gain": 2.5196250449640623,
+        "var_gain": 3.6935564844111948,
+        "fisher": 0.004689591219270279,
+        "overlap_top_second": 0.15095760823517598,
+        "overlap_top_cov": 0.1422924239743303
+      },
+      "cab0": {
+        "common_mode": 0.9421750223574329,
+        "mean_capture": 0.9960108959967251,
+        "energy_gain": 68.528586952092,
+        "var_gain": 12.202400085685857,
+        "fisher": 0.005286849493440448,
+        "overlap_top_second": 0.43199726980225606,
+        "overlap_top_cov": 0.3843850038639057
+      },
+      "cab_05": {
+        "common_mode": 0.383313892677479,
+        "mean_capture": 0.013090677924657209,
+        "energy_gain": 2.2138431698922316,
+        "var_gain": 4.204061171530948,
+        "fisher": 0.005879798465944203,
+        "overlap_top_second": 0.15264235924956993,
+        "overlap_top_cov": 0.1559185399935821
+      },
+      "cab_10": {
+        "common_mode": 0.9297588153110756,
+        "mean_capture": 0.6466797049657517,
+        "energy_gain": 45.08771235512694,
+        "var_gain": 9.752322139606603,
+        "fisher": 0.004721129664821275,
+        "overlap_top_second": 0.39339308613275165,
+        "overlap_top_cov": 0.3582376670186825
+      },
+      "cab_20": {
+        "common_mode": 0.9396601920303854,
+        "mean_capture": 0.9892617877728217,
+        "energy_gain": 68.24638930382105,
+        "var_gain": 12.680652836530797,
+        "fisher": 0.00492634614511132,
+        "overlap_top_second": 0.4683447574909843,
+        "overlap_top_cov": 0.4187794419964177
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.2.attention.self.value",
+      "input_common_mode": 0.6752553611948937,
+      "random": {
+        "common_mode": 0.5424541908061702,
+        "mean_capture": 0.005607939553760681,
+        "energy_gain": 0.6701615842572448,
+        "var_gain": 0.9442176643403246,
+        "fisher": 0.002950837183293874,
+        "overlap_top_second": 0.00936995891680858,
+        "overlap_top_cov": 0.008771449051333115
+      },
+      "spectral": {
+        "common_mode": 0.10679027405768514,
+        "mean_capture": 0.0006723514603199811,
+        "energy_gain": 0.4081350805648447,
+        "var_gain": 1.122575032493615,
+        "fisher": 0.004544459916956805,
+        "overlap_top_second": 0.013906807819164441,
+        "overlap_top_cov": 0.013471840041393339
+      },
+      "cab0": {
+        "common_mode": 0.9332774337841151,
+        "mean_capture": 0.9991305437928707,
+        "energy_gain": 69.39860565945479,
+        "var_gain": 14.258751363658163,
+        "fisher": 0.005519182402828822,
+        "overlap_top_second": 0.49372345032938053,
+        "overlap_top_cov": 0.4167569649281832
+      },
+      "cab_05": {
+        "common_mode": 0.014675219485563204,
+        "mean_capture": 0.0003254159750608616,
+        "energy_gain": 1.4374526167373531,
+        "var_gain": 4.361450551726134,
+        "fisher": 0.006829693849849731,
+        "overlap_top_second": 0.12075815570733014,
+        "overlap_top_cov": 0.11777174212813313
+      },
+      "cab_10": {
+        "common_mode": 0.053173401475841146,
+        "mean_capture": 0.0014097716461006114,
+        "energy_gain": 1.7186743789968009,
+        "var_gain": 5.010972997810654,
+        "fisher": 0.007120416467280412,
+        "overlap_top_second": 0.15910945589849207,
+        "overlap_top_cov": 0.15739718090440147
+      },
+      "cab_20": {
+        "common_mode": 0.9353924505824146,
+        "mean_capture": 0.9962505594655291,
+        "energy_gain": 69.04209989245682,
+        "var_gain": 13.735841481813544,
+        "fisher": 0.005767112223487949,
+        "overlap_top_second": 0.4759193543162992,
+        "overlap_top_cov": 0.39777766855893715
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.3.attention.self.query",
+      "input_common_mode": 0.7028823292433899,
+      "random": {
+        "common_mode": 0.7146079370307984,
+        "mean_capture": 0.01042246262855051,
+        "energy_gain": 0.9841388336206454,
+        "var_gain": 0.9453002618789939,
+        "fisher": 0.0038039320330516125,
+        "overlap_top_second": 0.009497513675880451,
+        "overlap_top_cov": 0.00894436091525161
+      },
+      "spectral": {
+        "common_mode": 0.6391299912844978,
+        "mean_capture": 0.013965633274033471,
+        "energy_gain": 1.4744338553526648,
+        "var_gain": 1.7908021319519916,
+        "fisher": 0.0027328103372878327,
+        "overlap_top_second": 0.04877978920408612,
+        "overlap_top_cov": 0.05398938892182918
+      },
+      "cab0": {
+        "common_mode": 0.9503185565957551,
+        "mean_capture": 0.9977994936163727,
+        "energy_gain": 70.84805428983249,
+        "var_gain": 11.846597984354066,
+        "fisher": 0.005613026609869042,
+        "overlap_top_second": 0.46925917776011544,
+        "overlap_top_cov": 0.4217013983739324
+      },
+      "cab_05": {
+        "common_mode": 0.36618404162483487,
+        "mean_capture": 0.010085763850731759,
+        "energy_gain": 1.8585028855707288,
+        "var_gain": 3.9645867731844264,
+        "fisher": 0.0060286534140553995,
+        "overlap_top_second": 0.11584254375296271,
+        "overlap_top_cov": 0.12546742965292385
+      },
+      "cab_10": {
+        "common_mode": 0.9754429491478025,
+        "mean_capture": 0.9111496178343913,
+        "energy_gain": 63.02918357069351,
+        "var_gain": 5.209420436611496,
+        "fisher": 0.007232046093043885,
+        "overlap_top_second": 0.24783584466344094,
+        "overlap_top_cov": 0.18714749530521024
+      },
+      "cab_20": {
+        "common_mode": 0.9666807378823139,
+        "mean_capture": 0.9940349551998466,
+        "energy_gain": 69.38609555241455,
+        "var_gain": 7.7810703723764325,
+        "fisher": 0.006375837236935096,
+        "overlap_top_second": 0.352316634629625,
+        "overlap_top_cov": 0.30113576509355966
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.3.attention.self.value",
+      "input_common_mode": 0.7028823292433899,
+      "random": {
+        "common_mode": 0.7237278320045233,
+        "mean_capture": 0.011299528256238554,
+        "energy_gain": 1.053510567553376,
+        "var_gain": 0.9795972341966169,
+        "fisher": 0.00281759915503197,
+        "overlap_top_second": 0.007883136056376173,
+        "overlap_top_cov": 0.007482405430073057
+      },
+      "spectral": {
+        "common_mode": 0.06468723758849221,
+        "mean_capture": 0.00035484125729131575,
+        "energy_gain": 0.3701428479328129,
+        "var_gain": 1.1651926615650472,
+        "fisher": 0.005937580121533548,
+        "overlap_top_second": 0.013414130475495063,
+        "overlap_top_cov": 0.015485861277693741
+      },
+      "cab0": {
+        "common_mode": 0.9374431356787631,
+        "mean_capture": 0.9994994668638595,
+        "energy_gain": 71.94348831885128,
+        "var_gain": 15.147396067350055,
+        "fisher": 0.0055307608850697606,
+        "overlap_top_second": 0.6517622794197977,
+        "overlap_top_cov": 0.6228415994545966
+      },
+      "cab_05": {
+        "common_mode": 0.011506961451682673,
+        "mean_capture": 0.00015564465663789738,
+        "energy_gain": 0.9126986657706923,
+        "var_gain": 3.0364948510441123,
+        "fisher": 0.011047806614151582,
+        "overlap_top_second": 0.05809815960977891,
+        "overlap_top_cov": 0.0710440243548198
+      },
+      "cab_10": {
+        "common_mode": 0.061782417623618406,
+        "mean_capture": 0.0013069503709160824,
+        "energy_gain": 1.4274077674507788,
+        "var_gain": 4.507369289859526,
+        "fisher": 0.010666348996160294,
+        "overlap_top_second": 0.12460734136509208,
+        "overlap_top_cov": 0.14075782551665034
+      },
+      "cab_20": {
+        "common_mode": 0.9430373594096436,
+        "mean_capture": 0.9969095579241841,
+        "energy_gain": 71.33139540252236,
+        "var_gain": 13.675472848099108,
+        "fisher": 0.005908568723514574,
+        "overlap_top_second": 0.5719159949472706,
+        "overlap_top_cov": 0.5360619143347549
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.4.attention.self.query",
+      "input_common_mode": 0.7073620168984245,
+      "random": {
+        "common_mode": 0.5625107350218852,
+        "mean_capture": 0.005840784596622249,
+        "energy_gain": 0.7051042688954572,
+        "var_gain": 1.054119991747385,
+        "fisher": 0.002332880453823847,
+        "overlap_top_second": 0.010380342450579427,
+        "overlap_top_cov": 0.0108604445107948
+      },
+      "spectral": {
+        "common_mode": 0.49484003295075674,
+        "mean_capture": 0.009897945231861261,
+        "energy_gain": 1.3582921418433442,
+        "var_gain": 2.344722330110726,
+        "fisher": 0.0036221329266016744,
+        "overlap_top_second": 0.07534431863857313,
+        "overlap_top_cov": 0.07546779310471617
+      },
+      "cab0": {
+        "common_mode": 0.9445850459968432,
+        "mean_capture": 0.9976464803495608,
+        "energy_gain": 71.72137017234515,
+        "var_gain": 13.581409996816063,
+        "fisher": 0.0056181610680842795,
+        "overlap_top_second": 0.4862662593114865,
+        "overlap_top_cov": 0.43627051932238914
+      },
+      "cab_05": {
+        "common_mode": 0.2002544991222409,
+        "mean_capture": 0.004613168001335952,
+        "energy_gain": 1.5643357041058858,
+        "var_gain": 4.27514715609174,
+        "fisher": 0.014269759958455962,
+        "overlap_top_second": 0.12299709553296931,
+        "overlap_top_cov": 0.11970701114593024
+      },
+      "cab_10": {
+        "common_mode": 0.8068302312096254,
+        "mean_capture": 0.15243464678271765,
+        "energy_gain": 12.829640737493762,
+        "var_gain": 8.468821130663061,
+        "fisher": 0.012654623526225893,
+        "overlap_top_second": 0.26261060571875416,
+        "overlap_top_cov": 0.24549434937379983
+      },
+      "cab_20": {
+        "common_mode": 0.9527276533816335,
+        "mean_capture": 0.9848743177509767,
+        "energy_gain": 70.19804390794353,
+        "var_gain": 11.339697698763143,
+        "fisher": 0.006972147553086357,
+        "overlap_top_second": 0.4377253520360907,
+        "overlap_top_cov": 0.37603967014932055
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.4.attention.self.value",
+      "input_common_mode": 0.7073620168984245,
+      "random": {
+        "common_mode": 0.6763441429592653,
+        "mean_capture": 0.009213601787321887,
+        "energy_gain": 0.9250701629611963,
+        "var_gain": 1.0231220610623657,
+        "fisher": 0.002304931696159889,
+        "overlap_top_second": 0.010297982701169906,
+        "overlap_top_cov": 0.01299277197335564
+      },
+      "spectral": {
+        "common_mode": 0.06516778492423812,
+        "mean_capture": 0.0002556398039844391,
+        "energy_gain": 0.26638421430762205,
+        "var_gain": 0.8509645346891747,
+        "fisher": 0.008136999492225726,
+        "overlap_top_second": 0.0064951082879536794,
+        "overlap_top_cov": 0.007982022040185447
+      },
+      "cab0": {
+        "common_mode": 0.9287972498925131,
+        "mean_capture": 0.9992964768914099,
+        "energy_gain": 73.06113326638217,
+        "var_gain": 17.776754607860173,
+        "fisher": 0.00607274817656965,
+        "overlap_top_second": 0.7039274351347945,
+        "overlap_top_cov": 0.6858728928807741
+      },
+      "cab_05": {
+        "common_mode": 0.011602191865308288,
+        "mean_capture": 0.0001246598269191447,
+        "energy_gain": 0.7296245615884407,
+        "var_gain": 2.4643394196198156,
+        "fisher": 0.014410536997429875,
+        "overlap_top_second": 0.032740323926777164,
+        "overlap_top_cov": 0.03508891953668124
+      },
+      "cab_10": {
+        "common_mode": 0.04992219315918112,
+        "mean_capture": 0.0008537513646894143,
+        "energy_gain": 1.1613168394217575,
+        "var_gain": 3.770328595595059,
+        "fisher": 0.014508430600162879,
+        "overlap_top_second": 0.08638656979422377,
+        "overlap_top_cov": 0.08874219323960365
+      },
+      "cab_20": {
+        "common_mode": 0.9344183714906178,
+        "mean_capture": 0.9891511755140346,
+        "energy_gain": 71.88433705946643,
+        "var_gain": 16.109637712480023,
+        "fisher": 0.007805841077385144,
+        "overlap_top_second": 0.6173479229713454,
+        "overlap_top_cov": 0.598482125201458
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.5.attention.self.query",
+      "input_common_mode": 0.7159341893111745,
+      "random": {
+        "common_mode": 0.4846180090741976,
+        "mean_capture": 0.003949770058494517,
+        "energy_gain": 0.5601658124484682,
+        "var_gain": 1.0163115757162062,
+        "fisher": 0.004934193125553621,
+        "overlap_top_second": 0.011726727587133105,
+        "overlap_top_cov": 0.012621128916291934
+      },
+      "spectral": {
+        "common_mode": 0.5650320923466099,
+        "mean_capture": 0.011224757202723265,
+        "energy_gain": 1.3653631456898039,
+        "var_gain": 2.09067451386577,
+        "fisher": 0.0033862527372634926,
+        "overlap_top_second": 0.050673853985970296,
+        "overlap_top_cov": 0.060995013881634766
+      },
+      "cab0": {
+        "common_mode": 0.930573529576907,
+        "mean_capture": 0.997305913237006,
+        "energy_gain": 73.65835827940182,
+        "var_gain": 18.002306648935136,
+        "fisher": 0.007424973471298015,
+        "overlap_top_second": 0.5973451961174032,
+        "overlap_top_cov": 0.5192036831820543
+      },
+      "cab_05": {
+        "common_mode": 0.025975921392095497,
+        "mean_capture": 0.00033397329377284714,
+        "energy_gain": 0.8836598320841128,
+        "var_gain": 3.02995264252828,
+        "fisher": 0.01703953412446728,
+        "overlap_top_second": 0.06416763930720222,
+        "overlap_top_cov": 0.07047654877253873
+      },
+      "cab_10": {
+        "common_mode": 0.08883887891868336,
+        "mean_capture": 0.00194275695131016,
+        "energy_gain": 1.5030026203600386,
+        "var_gain": 4.820986901713347,
+        "fisher": 0.013197357287234621,
+        "overlap_top_second": 0.14123677461608697,
+        "overlap_top_cov": 0.14753210253162602
+      },
+      "cab_20": {
+        "common_mode": 0.9390173248716874,
+        "mean_capture": 0.8028897887059653,
+        "energy_gain": 58.766072293660045,
+        "var_gain": 12.615781837881615,
+        "fisher": 0.010450046239696423,
+        "overlap_top_second": 0.44571753686044496,
+        "overlap_top_cov": 0.3915671846358056
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.5.attention.self.value",
+      "input_common_mode": 0.7159341893111745,
+      "random": {
+        "common_mode": 0.8245019784232301,
+        "mean_capture": 0.021457805373201175,
+        "energy_gain": 1.7887017642690282,
+        "var_gain": 1.1050735745315168,
+        "fisher": 0.0032664309705125027,
+        "overlap_top_second": 0.013826016532918126,
+        "overlap_top_cov": 0.013458941412272971
+      },
+      "spectral": {
+        "common_mode": 0.08233484255812942,
+        "mean_capture": 0.00034462917479756504,
+        "energy_gain": 0.2876820179131076,
+        "var_gain": 0.9293471946562989,
+        "fisher": 0.008313202954285793,
+        "overlap_top_second": 0.0073345332379890675,
+        "overlap_top_cov": 0.01033954572352681
+      },
+      "cab0": {
+        "common_mode": 0.9220781154252232,
+        "mean_capture": 0.9990884254653025,
+        "energy_gain": 74.46986193155543,
+        "var_gain": 20.42777330949838,
+        "fisher": 0.004916546331541822,
+        "overlap_top_second": 0.7355955306542079,
+        "overlap_top_cov": 0.6608378067099172
+      },
+      "cab_05": {
+        "common_mode": 0.011506869315810849,
+        "mean_capture": 0.00013373022369252938,
+        "energy_gain": 0.7987607679527018,
+        "var_gain": 2.779530314706522,
+        "fisher": 0.019901327753303544,
+        "overlap_top_second": 0.05093581656283486,
+        "overlap_top_cov": 0.06042639054150174
+      },
+      "cab_10": {
+        "common_mode": 0.05510100557095747,
+        "mean_capture": 0.0010236850101279543,
+        "energy_gain": 1.2768831469263773,
+        "var_gain": 4.247345354967032,
+        "fisher": 0.01730172594385775,
+        "overlap_top_second": 0.10113243105828641,
+        "overlap_top_cov": 0.11504615382525818
+      },
+      "cab_20": {
+        "common_mode": 0.929118341257483,
+        "mean_capture": 0.9851083752415204,
+        "energy_gain": 72.87143362764239,
+        "var_gain": 18.183279705316753,
+        "fisher": 0.007093762957292438,
+        "overlap_top_second": 0.6433384175895097,
+        "overlap_top_cov": 0.5667029306688951
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.6.attention.self.query",
+      "input_common_mode": 0.7254296676581864,
+      "random": {
+        "common_mode": 0.7651271983575108,
+        "mean_capture": 0.012215518748221736,
+        "energy_gain": 1.111846466290181,
+        "var_gain": 0.9510950884845751,
+        "fisher": 0.002067381263682914,
+        "overlap_top_second": 0.010413918084254771,
+        "overlap_top_cov": 0.010482082621084141
+      },
+      "spectral": {
+        "common_mode": 0.6914582358784607,
+        "mean_capture": 0.02077712118927299,
+        "energy_gain": 2.092598766442688,
+        "var_gain": 2.3515072057858264,
+        "fisher": 0.0037881545423033704,
+        "overlap_top_second": 0.03875862376703172,
+        "overlap_top_cov": 0.04565156232440286
+      },
+      "cab0": {
+        "common_mode": 0.9268567590885034,
+        "mean_capture": 0.998227027001796,
+        "energy_gain": 75.00379682305777,
+        "var_gain": 19.980384382811845,
+        "fisher": 0.008685757470680936,
+        "overlap_top_second": 0.6001403466103326,
+        "overlap_top_cov": 0.5085124500982997
+      },
+      "cab_05": {
+        "common_mode": 0.043200937713647025,
+        "mean_capture": 0.0006725555033674998,
+        "energy_gain": 1.0841802781749075,
+        "var_gain": 3.7780581196067358,
+        "fisher": 0.0281353116141328,
+        "overlap_top_second": 0.08399483672388944,
+        "overlap_top_cov": 0.08542321430546701
+      },
+      "cab_10": {
+        "common_mode": 0.3740679480724589,
+        "mean_capture": 0.03058682183833669,
+        "energy_gain": 5.69443187812029,
+        "var_gain": 12.981473270011541,
+        "fisher": 0.016685217901251482,
+        "overlap_top_second": 0.27297346777301995,
+        "overlap_top_cov": 0.27084049872582866
+      },
+      "cab_20": {
+        "common_mode": 0.9300194199749752,
+        "mean_capture": 0.9690857529990974,
+        "energy_gain": 72.56659366525503,
+        "var_gain": 18.495269579281764,
+        "fisher": 0.011353596250671056,
+        "overlap_top_second": 0.5329314296127974,
+        "overlap_top_cov": 0.4412682331334611
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.6.attention.self.value",
+      "input_common_mode": 0.7254296676581864,
+      "random": {
+        "common_mode": 0.6472772092734297,
+        "mean_capture": 0.007515471018804166,
+        "energy_gain": 0.8085975750022519,
+        "var_gain": 1.0387531340220368,
+        "fisher": 0.003998345693119296,
+        "overlap_top_second": 0.010182954571494233,
+        "overlap_top_cov": 0.010035610131152494
+      },
+      "spectral": {
+        "common_mode": 0.12847119865384815,
+        "mean_capture": 0.0005630141229023377,
+        "energy_gain": 0.30519685832292764,
+        "var_gain": 0.9687421428243135,
+        "fisher": 0.002609950333598276,
+        "overlap_top_second": 0.006786264012033133,
+        "overlap_top_cov": 0.009377917484955778
+      },
+      "cab0": {
+        "common_mode": 0.9164638330721283,
+        "mean_capture": 0.9985006621710892,
+        "energy_gain": 75.87515167332465,
+        "var_gain": 23.084501817078745,
+        "fisher": 0.006191846805620938,
+        "overlap_top_second": 0.7491877410849447,
+        "overlap_top_cov": 0.660986225070395
+      },
+      "cab_05": {
+        "common_mode": 0.012280433120640442,
+        "mean_capture": 0.00018046764413770934,
+        "energy_gain": 1.0234160192138646,
+        "var_gain": 3.6815631849726143,
+        "fisher": 0.028776240178520093,
+        "overlap_top_second": 0.07200123882740717,
+        "overlap_top_cov": 0.08994427767268617
+      },
+      "cab_10": {
+        "common_mode": 0.14684583329741172,
+        "mean_capture": 0.003394879434183474,
+        "energy_gain": 1.6100125936183631,
+        "var_gain": 5.002685253624421,
+        "fisher": 0.024195909314901818,
+        "overlap_top_second": 0.12127415595928259,
+        "overlap_top_cov": 0.1452438426717227
+      },
+      "cab_20": {
+        "common_mode": 0.922135264004099,
+        "mean_capture": 0.9784175757105452,
+        "energy_gain": 73.8917855010537,
+        "var_gain": 20.954792607173122,
+        "fisher": 0.009050303691222178,
+        "overlap_top_second": 0.6616987702033996,
+        "overlap_top_cov": 0.5762258384979464
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.7.attention.self.query",
+      "input_common_mode": 0.7423778669067662,
+      "random": {
+        "common_mode": 0.7217320040297234,
+        "mean_capture": 0.009283583367883208,
+        "energy_gain": 0.9167183536607834,
+        "var_gain": 0.9901842519487205,
+        "fisher": 0.009924407447120743,
+        "overlap_top_second": 0.010389208998105132,
+        "overlap_top_cov": 0.009975597779003892
+      },
+      "spectral": {
+        "common_mode": 0.6326151206529717,
+        "mean_capture": 0.03127882622527284,
+        "energy_gain": 3.5237665419311597,
+        "var_gain": 5.025106074197301,
+        "fisher": 0.005296343791563027,
+        "overlap_top_second": 0.10931742141592304,
+        "overlap_top_cov": 0.1145875143352503
+      },
+      "cab0": {
+        "common_mode": 0.9259458356458125,
+        "mean_capture": 0.99548954500727,
+        "energy_gain": 76.62092116410216,
+        "var_gain": 22.02488668472524,
+        "fisher": 0.00904470018423024,
+        "overlap_top_second": 0.6228921320214258,
+        "overlap_top_cov": 0.5191430466454827
+      },
+      "cab_05": {
+        "common_mode": 0.010493491478272561,
+        "mean_capture": 0.00012426726945910857,
+        "energy_gain": 0.843981622262349,
+        "var_gain": 3.2416675472486958,
+        "fisher": 0.03411359604299986,
+        "overlap_top_second": 0.0527548972277139,
+        "overlap_top_cov": 0.06470898962391922
+      },
+      "cab_10": {
+        "common_mode": 0.2271322975603401,
+        "mean_capture": 0.007324681753746742,
+        "energy_gain": 2.298296810952624,
+        "var_gain": 6.8949020585995795,
+        "fisher": 0.025135727790638784,
+        "overlap_top_second": 0.1428100739724963,
+        "overlap_top_cov": 0.1524500320620923
+      },
+      "cab_20": {
+        "common_mode": 0.9358396840925925,
+        "mean_capture": 0.7891278015530764,
+        "energy_gain": 60.095525230665764,
+        "var_gain": 14.966679442972097,
+        "fisher": 0.01839294183480516,
+        "overlap_top_second": 0.4396967421495788,
+        "overlap_top_cov": 0.36544588085304497
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.7.attention.self.value",
+      "input_common_mode": 0.7423778669067662,
+      "random": {
+        "common_mode": 0.7555805539391173,
+        "mean_capture": 0.011819029321171454,
+        "energy_gain": 1.1148008377653562,
+        "var_gain": 1.0576692303692927,
+        "fisher": 0.0030028647159989486,
+        "overlap_top_second": 0.011451243114704615,
+        "overlap_top_cov": 0.010940240281822552
+      },
+      "spectral": {
+        "common_mode": 0.06762913508567134,
+        "mean_capture": 0.00020173110301028446,
+        "energy_gain": 0.21258630251848945,
+        "var_gain": 0.7693798369271748,
+        "fisher": 0.007878776993353005,
+        "overlap_top_second": 0.0030356320521705694,
+        "overlap_top_cov": 0.003994329841502694
+      },
+      "cab0": {
+        "common_mode": 0.9181647860001917,
+        "mean_capture": 0.9986463308146855,
+        "energy_gain": 77.51528117848633,
+        "var_gain": 24.62319346296633,
+        "fisher": 0.01314478606700412,
+        "overlap_top_second": 0.7264744963464027,
+        "overlap_top_cov": 0.6375107763916179
+      },
+      "cab_05": {
+        "common_mode": 0.00888707434835824,
+        "mean_capture": 0.00010382051963739063,
+        "energy_gain": 0.8325697611255448,
+        "var_gain": 3.203027014218522,
+        "fisher": 0.04325454832569162,
+        "overlap_top_second": 0.06462884864803203,
+        "overlap_top_cov": 0.0836910894406471
+      },
+      "cab_10": {
+        "common_mode": 0.11984112029311576,
+        "mean_capture": 0.002041742529360905,
+        "energy_gain": 1.2142031730110352,
+        "var_gain": 4.14829149833635,
+        "fisher": 0.03855519341254494,
+        "overlap_top_second": 0.0973227429717213,
+        "overlap_top_cov": 0.11590896228598012
+      },
+      "cab_20": {
+        "common_mode": 0.9214623896927296,
+        "mean_capture": 0.9731486417615197,
+        "energy_gain": 75.26582311962163,
+        "var_gain": 22.945225298190664,
+        "fisher": 0.012623282403302395,
+        "overlap_top_second": 0.6710576923895759,
+        "overlap_top_cov": 0.5831393142667938
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.8.attention.self.query",
+      "input_common_mode": 0.7307998250631019,
+      "random": {
+        "common_mode": 0.7499031221747227,
+        "mean_capture": 0.010964424338691575,
+        "energy_gain": 1.0257708210069076,
+        "var_gain": 0.9529788743942434,
+        "fisher": 0.007605382053359574,
+        "overlap_top_second": 0.012018773401223481,
+        "overlap_top_cov": 0.01119084485422867
+      },
+      "spectral": {
+        "common_mode": 0.5451914114081042,
+        "mean_capture": 0.02293550775224676,
+        "energy_gain": 2.951406444462039,
+        "var_gain": 4.98634519714355,
+        "fisher": 0.004683338159673257,
+        "overlap_top_second": 0.11192643352409062,
+        "overlap_top_cov": 0.11916792318692286
+      },
+      "cab0": {
+        "common_mode": 0.917786264692474,
+        "mean_capture": 0.9969588944095112,
+        "energy_gain": 76.20884263709846,
+        "var_gain": 23.274181074094646,
+        "fisher": 0.00945886068041936,
+        "overlap_top_second": 0.6057185424394305,
+        "overlap_top_cov": 0.5276487452820835
+      },
+      "cab_05": {
+        "common_mode": 0.02130849475919354,
+        "mean_capture": 0.00033268091684987073,
+        "energy_gain": 1.0953295023412652,
+        "var_gain": 3.982128464932521,
+        "fisher": 0.03619834823768695,
+        "overlap_top_second": 0.06903318921421112,
+        "overlap_top_cov": 0.08168439344025835
+      },
+      "cab_10": {
+        "common_mode": 0.24804769907265628,
+        "mean_capture": 0.008361741689432833,
+        "energy_gain": 2.3650003653481284,
+        "var_gain": 6.606115567474617,
+        "fisher": 0.024080857300202332,
+        "overlap_top_second": 0.15274240197119263,
+        "overlap_top_cov": 0.1698402298776464
+      },
+      "cab_20": {
+        "common_mode": 0.9389367650976532,
+        "mean_capture": 0.9746643937057529,
+        "energy_gain": 72.82632985488276,
+        "var_gain": 16.51934768633382,
+        "fisher": 0.0090848342890773,
+        "overlap_top_second": 0.4484229285621688,
+        "overlap_top_cov": 0.3749378076684178
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.8.attention.self.value",
+      "input_common_mode": 0.7307998250631019,
+      "random": {
+        "common_mode": 0.4717271812021798,
+        "mean_capture": 0.00362807929955361,
+        "energy_gain": 0.5395796193564614,
+        "var_gain": 1.058859811477123,
+        "fisher": 0.005619402489811751,
+        "overlap_top_second": 0.010716260993042268,
+        "overlap_top_cov": 0.011431664492531702
+      },
+      "spectral": {
+        "common_mode": 0.0718604547477827,
+        "mean_capture": 0.000163338657700412,
+        "energy_gain": 0.159466215983136,
+        "var_gain": 0.5498023960065155,
+        "fisher": 0.0029815078491355978,
+        "overlap_top_second": 0.0030186939645830803,
+        "overlap_top_cov": 0.004300860911505851
+      },
+      "cab0": {
+        "common_mode": 0.9153796484986371,
+        "mean_capture": 0.998418282703823,
+        "energy_gain": 76.52105344870024,
+        "var_gain": 24.053618990408783,
+        "fisher": 0.013541036726200663,
+        "overlap_top_second": 0.6261538218423708,
+        "overlap_top_cov": 0.5368664550593971
+      },
+      "cab_05": {
+        "common_mode": 0.007399821364517008,
+        "mean_capture": 9.04625693205159e-05,
+        "energy_gain": 0.8576643342385136,
+        "var_gain": 3.1623967984938495,
+        "fisher": 0.04981895151055563,
+        "overlap_top_second": 0.0727107455880888,
+        "overlap_top_cov": 0.08002199630716542
+      },
+      "cab_10": {
+        "common_mode": 0.08643016741033048,
+        "mean_capture": 0.001850495576019426,
+        "energy_gain": 1.5020775828677466,
+        "var_gain": 5.097518106141072,
+        "fisher": 0.03811937838919535,
+        "overlap_top_second": 0.17375370810574006,
+        "overlap_top_cov": 0.18664451091077586
+      },
+      "cab_20": {
+        "common_mode": 0.9204044804907086,
+        "mean_capture": 0.9837462959597822,
+        "energy_gain": 74.98494094532988,
+        "var_gain": 22.17110494566399,
+        "fisher": 0.009481496274663749,
+        "overlap_top_second": 0.5811839932573332,
+        "overlap_top_cov": 0.4905184104268149
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.9.attention.self.query",
+      "input_common_mode": 0.7133220194425705,
+      "random": {
+        "common_mode": 0.7113463139676929,
+        "mean_capture": 0.011673135573118085,
+        "energy_gain": 1.1237334470811366,
+        "var_gain": 1.1314779076755108,
+        "fisher": 0.006052279974316322,
+        "overlap_top_second": 0.012400605569236157,
+        "overlap_top_cov": 0.011490702602230483
+      },
+      "spectral": {
+        "common_mode": 0.49913022767906223,
+        "mean_capture": 0.020325862323176156,
+        "energy_gain": 2.7886369089748406,
+        "var_gain": 4.872170269122518,
+        "fisher": 0.005218865930168713,
+        "overlap_top_second": 0.11495679167771206,
+        "overlap_top_cov": 0.12812008171205408
+      },
+      "cab0": {
+        "common_mode": 0.91798486911765,
+        "mean_capture": 0.9977834215087865,
+        "energy_gain": 74.43164618234222,
+        "var_gain": 21.294000995694418,
+        "fisher": 0.007884325989218934,
+        "overlap_top_second": 0.5560752947484845,
+        "overlap_top_cov": 0.459889411562052
+      },
+      "cab_05": {
+        "common_mode": 0.018678692523127094,
+        "mean_capture": 0.0003002771330306827,
+        "energy_gain": 1.1008614175442946,
+        "var_gain": 3.768335340980247,
+        "fisher": 0.021287934713933677,
+        "overlap_top_second": 0.08839353714116005,
+        "overlap_top_cov": 0.09634991763177086
+      },
+      "cab_10": {
+        "common_mode": 0.22296095529673274,
+        "mean_capture": 0.007613617380939099,
+        "energy_gain": 2.3384015741582864,
+        "var_gain": 6.3382242395577695,
+        "fisher": 0.015521682362802734,
+        "overlap_top_second": 0.18360739396146955,
+        "overlap_top_cov": 0.1937403877178322
+      },
+      "cab_20": {
+        "common_mode": 0.9278130150736783,
+        "mean_capture": 0.8231656061232454,
+        "energy_gain": 60.75522300696736,
+        "var_gain": 15.29847656548789,
+        "fisher": 0.011011420215080713,
+        "overlap_top_second": 0.4149801203867365,
+        "overlap_top_cov": 0.33191712497415077
+      }
+    },
+    {
+      "name": "encoder.encoder.layer.9.attention.self.value",
+      "input_common_mode": 0.7133220194425705,
+      "random": {
+        "common_mode": 0.5947397576113592,
+        "mean_capture": 0.006785107119957721,
+        "energy_gain": 0.7812438299208072,
+        "var_gain": 1.1043996586787417,
+        "fisher": 0.004686677980838387,
+        "overlap_top_second": 0.01385913216684572,
+        "overlap_top_cov": 0.013760067163853754
+      },
+      "spectral": {
+        "common_mode": 0.07134934284967076,
+        "mean_capture": 0.00017446558678026113,
+        "energy_gain": 0.1674467263835031,
+        "var_gain": 0.5424187521879117,
+        "fisher": 0.004695786071093927,
+        "overlap_top_second": 0.0024001391232880685,
+        "overlap_top_cov": 0.0031760250856787296
+      },
+      "cab0": {
+        "common_mode": 0.9078252320596574,
+        "mean_capture": 0.9976932831550291,
+        "energy_gain": 75.25782495309178,
+        "var_gain": 24.197437617140427,
+        "fisher": 0.009775384710390012,
+        "overlap_top_second": 0.6274946744602721,
+        "overlap_top_cov": 0.5436958078971046
+      },
+      "cab_05": {
+        "common_mode": 0.0015533150857891425,
+        "mean_capture": 1.9310724144438403e-05,
+        "energy_gain": 0.8513259334725809,
+        "var_gain": 2.9650116636248405,
+        "fisher": 0.04069870373865102,
+        "overlap_top_second": 0.07607003671041429,
+        "overlap_top_cov": 0.08885309212693462
+      },
+      "cab_10": {
+        "common_mode": 0.03377153008106848,
+        "mean_capture": 0.0008178360737659361,
+        "energy_gain": 1.6583354653426872,
+        "var_gain": 5.589305938930916,
+        "fisher": 0.026010012702684295,
+        "overlap_top_second": 0.19368422988724396,
+        "overlap_top_cov": 0.2117200955498103
+      },
+      "cab_20": {
+        "common_mode": 0.9096689919225471,
+        "mean_capture": 0.9507738112801776,
+        "energy_gain": 71.5732409341157,
+        "var_gain": 22.552422730122835,
+        "fisher": 0.011560769652792038,
+        "overlap_top_second": 0.5833785759947607,
+        "overlap_top_cov": 0.5079235587797953
+      }
+    }
+  ],
+  "records": {
+    "cab0": {
+      "kappa": 0.0,
+      "reported_energy_fraction_by_client": [
+        1.0000310003746105,
+        1.0000132573094835,
+        0.9998061268884,
+        1.0004099651759084,
+        0.9996962964777093,
+        0.9998207479794365,
+        1.0000894258014588,
+        1.0001126271776948,
+        0.9996605357596102,
+        1.00027993403569
+      ]
+    },
+    "cab_05": {
+      "kappa": 0.3610067912694378,
+      "reported_energy_fraction_by_client": [
+        1.0000310003746105,
+        1.0000132573094835,
+        0.9998061268884,
+        1.0004099651759084,
+        0.9996962964777093,
+        0.9998207479794365,
+        1.0000894258014588,
+        1.0001126271776948,
+        0.9996605357596102,
+        1.00027993403569
+      ]
+    },
+    "cab_10": {
+      "kappa": 0.13272626871290902,
+      "reported_energy_fraction_by_client": [
+        1.0000310003746105,
+        1.0000132573094835,
+        0.9998061268884,
+        1.0004099651759084,
+        0.9996962964777093,
+        0.9998207479794365,
+        1.0000894258014588,
+        1.0001126271776948,
+        0.9996605357596102,
+        1.00027993403569
+      ]
+    },
+    "cab_20": {
+      "kappa": 0.05505252549684983,
+      "reported_energy_fraction_by_client": [
+        1.0000310003746105,
+        1.0000132573094835,
+        0.9998061268884,
+        1.0004099651759084,
+        0.9996962964777093,
+        0.9998207479794365,
+        1.0000894258014588,
+        1.0001126271776948,
+        0.9996605357596102,
+        1.00027993403569
+      ]
+    }
+  }
+}

@@ -1,0 +1,124 @@
+# Activation-metric (curvature-aware) fixed-basis probe: MNLI, seed 361, train-holdout.
+#
+# Motivation (docs/proposals/RESEARCH_DIRECTIONS.md, direction 3, 10/7 check): the
+# Euclidean CAB objective keeps only the first-order term of a B-only step.  On
+# RoBERTa's anisotropic inputs the consensus-gradient basis captures 99.8% of the
+# shared mean direction, its projected energy is 74x a random basis, and every
+# basis containing that direction stalled at majority class (cab0 at 5/10/20%,
+# CAB at 20%).  Adding the curvature term A Sigma_x A^T of a Gauss-Newton / K-FAC
+# model turns the basis into the top-r generalized eigenvectors of (M, Sigma_x).
+#
+# Arms (all matched to cab_ef_dev: same learning rates, EF, caps, minibatch seeds;
+# baselines random/spectral/cab0/cab are read from bishe_cab cab_ef_dev seed 361):
+#   gev0_a_ef      generalized eigenvectors, kappa = 0          (the proposed fix)
+#   gev_a_ef       generalized eigenvectors, CAB kappa          (is kappa still needed?)
+#   cab0wh_a_ef    cab0 subspace, whitened within               (is whitening alone enough?)
+#   randomwh_a_ef  random subspace, whitened within             (does subspace choice matter?)
+# Clients additionally upload a rank-16 + diagonal FP16 sketch of each layer's input
+# second moment; it is charged to setup bytes.
+#
+# Pre-registered reading (fixed before any outcome):
+#   * gev0 avoids the stall at every budget and is within 0.005 of random or better
+#     at 10%  -> the curvature term is the missing piece; continue with 3 seeds x 3 tasks.
+#   * gev0 stalls like cab0                     -> the K-FAC objective is not the fix; drop.
+#   * cab0wh matches gev0                       -> conditioning, not subspace choice, drives it.
+#   * randomwh beats random clearly             -> whitening is a confound to report separately.
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_gev
+  output_dir: /data/home/202412012250/bishe_gev/docs/results/gev_probe
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 12
+
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+    - attention.self.query
+    - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-5
+
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks: [mnli]
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds: [361]
+
+training:
+  rounds:
+    sst2: 30
+    rte: 50
+    mnli: 50
+  local_steps:
+    sst2: 8
+    rte: 8
+    mnli: 16
+  batch_size:
+    sst2: 128
+    rte: 16
+    mnli: 128
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora: &full_lora_lr
+      learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+      head_learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+    random_a_ef: &fixed_a_lr
+      learning_rate: {sst2: 0.0003, rte: 0.0003, mnli: 0.001}
+      head_learning_rate: {sst2: 0.0003, rte: 0.0003, mnli: 0.001}
+    spectral_a_ef: *fixed_a_lr
+    cab0_a_ef: *fixed_a_lr
+    cab_a_ef: *fixed_a_lr
+    gev0_a_ef: *fixed_a_lr
+    gev_a_ef: *fixed_a_lr
+    cab0wh_a_ef: *fixed_a_lr
+    randomwh_a_ef: *fixed_a_lr
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every: {sst2: 1, rte: 1, mnli: 5}
+  checkpoint_every: 1
+
+evaluation:
+  policy: train_holdout
+
+communication:
+  wire_ratios: [0.05, 0.10, 0.20]
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+
+cab:
+  # assumed prior (see header); not a measured contraction
+  gamma: {sst2: 0.1, rte: 0.1, mnli: 0.1}
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  # rank of each client's truncated gradient SVD (balanced FP16 factors)
+  client_rank: 8
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  # input second-moment sketch: top-16 eigenpairs + diagonal remainder, FP16
+  activation_rank: 16
+  activation_ridge: 1.0e-3
+
+matrix:
+  dense_methods: []
+  sparse_methods: [gev0_a_ef, gev_a_ef, cab0wh_a_ef, randomwh_a_ef]
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

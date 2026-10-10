@@ -1,0 +1,91 @@
+# Qwen2.5-0.5B-Instruct (decoder LM, last-token linear head, LoRA r=8 on q_proj/v_proj)
+# learning-rate sweep on MNLI, seed 361, train-holdout; same 50 x 16 x 128 schedule as
+# RoBERTa.  Only the baselines are tuned (fedavg_lora dense, random_a_ef at 10%); the
+# chosen fixed-A rate is then shared by every fixed-A arm.  This file: 1e-3.
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_llm
+  output_dir: /data/home/202412012250/bishe_llm/docs/results/qwen05b_lr_1e-3
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_llm/artifacts/spectral/qwen2.5-0.5b-qv-r8-fp32.pt
+  expected_runs: 2
+model:
+  path: /data/home/202412012250/bishe_dcef/models/qwen2.5-0.5b-instruct
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - self_attn.q_proj
+  - self_attn.v_proj
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - mnli
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 361
+training:
+  rounds:
+    mnli: 50
+  local_steps:
+    mnli: 16
+  batch_size:
+    mnli: 128
+  eval_batch_size: 512
+  learning_rate: 0.001
+  head_learning_rate: 0.001
+  method_overrides:
+    fedavg_lora:
+      learning_rate:
+        mnli: 0.001
+      head_learning_rate:
+        mnli: 0.001
+    random_a_ef:
+      learning_rate:
+        mnli: 0.001
+      head_learning_rate:
+        mnli: 0.001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    mnli: 5
+  checkpoint_every: 1
+evaluation:
+  policy: train_holdout
+communication:
+  wire_ratios:
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+cab:
+  gamma:
+    mnli: 0.1
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  client_rank: 4
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  activation_rank: 8
+  activation_ridge: 0.001
+matrix:
+  dense_methods:
+  - fedavg_lora
+  sparse_methods:
+  - random_a_ef
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

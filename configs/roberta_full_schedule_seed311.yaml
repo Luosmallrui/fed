@@ -1,0 +1,80 @@
+project:
+  phase: tune
+  root: /data/home/202422011138/bishe
+  output_dir: /data/home/202422011138/bishe/docs/results/exploration/roberta_full_schedule_seed311_v1
+  tokenized_dir: /data/home/202422011138/bishe/artifacts/tokenized
+  partition_dir: /data/home/202422011138/bishe/artifacts/partitions-tune
+  spectral_cache: /data/home/202422011138/bishe/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+
+model:
+  path: /data/home/202422011138/bishe/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes: [attention.self.query, attention.self.value]
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-5
+
+data:
+  root: /data/home/202422011138/bishe/datasets
+  tasks: [sst2, rte, mnli]
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds: [311]
+
+training:
+  rounds: {sst2: 30, rte: 50, mnli: 50}
+  local_steps: {sst2: 8, rte: 8, mnli: 16}
+  batch_size: {sst2: 128, rte: 16, mnli: 128}
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora:
+      learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+      head_learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+    ffa_lora:
+      learning_rate: 0.001
+      head_learning_rate: 0.001
+    lora_xs:
+      learning_rate: {sst2: 0.001, rte: 0.001, mnli: 0.0003}
+      head_learning_rate: {sst2: 0.001, rte: 0.005, mnli: 0.0003}
+    flasc:
+      learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.0003}
+      head_learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.0003}
+    random_a_ef: &fixed_a_lr
+      learning_rate: {sst2: 0.0003, rte: 0.001, mnli: 0.001}
+      head_learning_rate: {sst2: 0.0003, rte: 0.001, mnli: 0.001}
+    spectral_a_ef: *fixed_a_lr
+    random_a_topk: *fixed_a_lr
+    spectral_a_topk: *fixed_a_lr
+    random_a_dense: *fixed_a_lr
+    spectral_a_dense: *fixed_a_lr
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every: {sst2: 1, rte: 1, mnli: 5}
+  checkpoint_every: 1
+
+evaluation:
+  policy: train_holdout
+
+communication:
+  wire_ratios: [0.10, 0.20]
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+
+matrix:
+  dense_methods: [fedavg_lora, ffa_lora, lora_xs]
+  sparse_methods: [flasc, random_a_ef, spectral_a_ef]
+  diagnostic_dense_methods: [random_a_dense, spectral_a_dense]
+  diagnostic_sparse_methods: [random_a_topk, spectral_a_topk]

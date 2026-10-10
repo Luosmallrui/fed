@@ -1,0 +1,111 @@
+# Setup-cost iteration for gev0 (MNLI, seed 361, train-holdout, 5% and 10%, where the
+# one-time basis bytes are the largest share).  Reference protocol: client gradient rank 8,
+# input-sketch rank 16, FP16 everywhere = 11.98 MB setup; gev0 reached 0.800 / 0.813.
+# This variant: gradient rank 2, sketch rank 4, int8 gradient factors and int8 basis broadcast.  Kept if the final score stays within 0.005 of the reference.
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_gev2
+  output_dir: /data/home/202412012250/bishe_gev2/docs/results/gev_cost_v3
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 2
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - attention.self.query
+  - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - mnli
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 361
+training:
+  rounds:
+    sst2: 30
+    rte: 50
+    mnli: 50
+  local_steps:
+    sst2: 8
+    rte: 8
+    mnli: 16
+  batch_size:
+    sst2: 128
+    rte: 16
+    mnli: 128
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora:
+      learning_rate:
+        sst2: 0.001
+        rte: 0.0003
+        mnli: 0.001
+      head_learning_rate:
+        sst2: 0.001
+        rte: 0.0003
+        mnli: 0.001
+    gev0_a_ef:
+      learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+      head_learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    sst2: 1
+    rte: 1
+    mnli: 5
+  checkpoint_every: 1
+evaluation:
+  policy: train_holdout
+communication:
+  wire_ratios:
+  - 0.05
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+cab:
+  gamma:
+    sst2: 0.1
+    rte: 0.1
+    mnli: 0.1
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  client_rank: 2
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  activation_rank: 4
+  activation_ridge: 0.001
+  factor_dtype: int8
+  basis_dtype: int8
+matrix:
+  dense_methods: []
+  sparse_methods:
+  - gev0_a_ef
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

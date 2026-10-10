@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+.deps/
+.compat/
+
+# OS / editor
+.DS_Store
+._*
+.idea/
+.vscode/
+
+# Caches and staging bundles (regenerable)
+artifacts/
+*.tgz
+*.tar.gz
+
+# Raw experiment outputs stay on the GPU server; keep only the compact summaries
+docs/results/*
+!docs/results/confirm/
+!docs/results/gev_dev/
+!docs/results/qnli_dev/
+!docs/results/cab_ef_dev/
+!docs/results/llm_check/
+!docs/results/exploration/
+docs/results/exploration/*
+!docs/results/exploration/cab_anisotropy_mnli.json
+
+# LaTeX build products
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+# Paper drafts and slides are not part of the code repository
+/www_paper.*
+/main.tex
+/refs.bib
+*.pptx
+docs/proposals/*.tex

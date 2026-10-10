@@ -1,0 +1,69 @@
+full_lora_noef:
+  protocol_sha256: 0fac36aa12df3d452458418eb40b91d748a595bd2433d068edde891c089f9205
+  execution_source_sha256: 5423f99f735cf4dd5bea547a43be11d7ad7af601b6a06d0f59f5cd9d317824b6
+  reference_ef_source_sha256: 0ea826d7f46452c6e9c914a58bec135db4a5e50c4ee6e0f890fd3cf726adbb15
+
+project:
+  phase: final
+  expected_runs: 18
+  root: /data/home/202422011138/bishe/artifacts/full_lora_noef_source_5423f99f735cf4dd5bea547a43be11d7ad7af601b6a06d0f59f5cd9d317824b6
+  output_dir: docs/results/full_lora_noef/formal
+  tokenized_dir: /data/home/202422011138/bishe/artifacts/tokenized
+  partition_dir: /data/home/202422011138/bishe/artifacts/partitions
+  spectral_cache: /data/home/202422011138/bishe/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+
+model:
+  path: /data/home/202422011138/bishe/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes: [attention.self.query, attention.self.value]
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-5
+
+data:
+  root: /data/home/202422011138/bishe/datasets
+  tasks: [sst2, rte, mnli]
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds: [401, 402, 403]
+
+training:
+  rounds: {sst2: 30, rte: 50, mnli: 50}
+  local_steps: {sst2: 8, rte: 8, mnli: 16}
+  batch_size: {sst2: 128, rte: 16, mnli: 128}
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    full_lora_topk:
+      learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+      head_learning_rate: {sst2: 0.001, rte: 0.0003, mnli: 0.001}
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every: {sst2: 1, rte: 1, mnli: 5}
+  checkpoint_every: 1
+
+evaluation:
+  policy: official_validation
+
+communication:
+  wire_ratios: [0.10, 0.20]
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+
+matrix:
+  dense_methods: []
+  sparse_methods: [full_lora_topk]
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

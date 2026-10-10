@@ -1,0 +1,94 @@
+# QNLI learning-rate sweep (replaces RTE, whose dense FedAvg score 0.549 is near chance).
+# Seed 42 (single seed, chosen by the user), train-holdout.  Only the baselines are tuned -- fedavg_lora (dense) and
+# random_a_ef at 10% -- and the chosen fixed-A rate is then shared by every fixed-A arm,
+# so the proposed basis gets no tuning of its own.
+# QNLI schedule (no prior tuning): 30 rounds x 16 local steps x batch 128 (about 6
+# passes over the 94k client training examples), evaluation every 3 rounds.
+# This file: learning rate 3e-4 for both arms.
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_qnli
+  output_dir: /data/home/202412012250/bishe_qnli/docs/results/qnli_lr_3e-4
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 2
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - attention.self.query
+  - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - qnli
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 42
+training:
+  rounds:
+    qnli: 30
+  local_steps:
+    qnli: 16
+  batch_size:
+    qnli: 128
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora:
+      learning_rate:
+        qnli: 0.0003
+      head_learning_rate:
+        qnli: 0.0003
+    random_a_ef:
+      learning_rate:
+        qnli: 0.0003
+      head_learning_rate:
+        qnli: 0.0003
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    qnli: 3
+  checkpoint_every: 1
+evaluation:
+  policy: train_holdout
+communication:
+  wire_ratios:
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+cab:
+  gamma:
+    qnli: 0.1
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  client_rank: 8
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  activation_rank: 16
+  activation_ridge: 0.001
+matrix:
+  dense_methods:
+  - fedavg_lora
+  sparse_methods:
+  - random_a_ef
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

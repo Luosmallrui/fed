@@ -1,0 +1,130 @@
+# Baseline checks before the confirmation stage (MNLI, seed 361, train-holdout):
+#   eva_a_ef        EVA-style fixed A (top input second-moment directions), 10% wire;
+#                   predicted to stall like cab0 (captures the shared mean direction).
+#   random_a_dense  FFA-LoRA-style fixed random A with uncompressed B synchronisation.
+#   gev0_a_dense    gev0 basis with uncompressed synchronisation (method is not tied to
+#                   compression).  Dense FedAvg-LoRA reference comes from cab_ef_dev.
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_gev2
+  output_dir: /data/home/202412012250/bishe_gev2/docs/results/gev_checks
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 3
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - attention.self.query
+  - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - mnli
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 361
+training:
+  rounds:
+    sst2: 30
+    rte: 50
+    mnli: 50
+  local_steps:
+    sst2: 8
+    rte: 8
+    mnli: 16
+  batch_size:
+    sst2: 128
+    rte: 16
+    mnli: 128
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora:
+      learning_rate:
+        sst2: 0.001
+        rte: 0.0003
+        mnli: 0.001
+      head_learning_rate:
+        sst2: 0.001
+        rte: 0.0003
+        mnli: 0.001
+    eva_a_ef:
+      learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+      head_learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+    random_a_dense:
+      learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+      head_learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+    gev0_a_dense:
+      learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+      head_learning_rate:
+        sst2: 0.0003
+        rte: 0.0003
+        mnli: 0.001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    sst2: 1
+    rte: 1
+    mnli: 5
+  checkpoint_every: 1
+evaluation:
+  policy: train_holdout
+communication:
+  wire_ratios:
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+cab:
+  gamma:
+    sst2: 0.1
+    rte: 0.1
+    mnli: 0.1
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  client_rank: 8
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  activation_rank: 16
+  activation_ridge: 0.001
+matrix:
+  dense_methods:
+  - random_a_dense
+  - gev0_a_dense
+  sparse_methods:
+  - eva_a_ef
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []

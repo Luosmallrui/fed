@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fedpeft-lab"
+version = "0.1.0"
+description = "Lightweight synchronisation for federated LoRA: curvature-aware fixed shared bases"
+requires-python = ">=3.10"
+dependencies = [
+  "torch==2.8.0",
+  "transformers==4.56.2",
+  "datasets==3.6.0",
+  "safetensors>=0.4.5",
+  "tokenizers>=0.21.0",
+  "numpy>=1.26,<3",
+  "PyYAML>=6.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+cache_dir = "artifacts/pytest-cache"
+
+[tool.mypy]
+cache_dir = "artifacts/mypy-cache"
+
+[tool.ruff]
+cache-dir = "artifacts/ruff-cache"
