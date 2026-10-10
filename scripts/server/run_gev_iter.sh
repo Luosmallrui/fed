@@ -13,7 +13,8 @@ run() {  # lane config method [wire]
   echo "[$(date '+%F %T')] START $config $method ${wire:-dense}" >> "logs/iter_${lane}.log"
   "$PY" scripts/run_experiment.py --config "configs/roberta_${config}.yaml" --task mnli \
     --method "$method" --seed 361 "${extra[@]}" >> "logs/iter_${lane}.log" 2>&1
-  echo "[$(date '+%F %T')] DONE $config $method ${wire:-dense} rc=$?" >> "logs/iter_${lane}.log"
+  rc=$?
+  echo "[$(date '+%F %T')] DONE $config $method ${wire:-dense} rc=$rc" >> "logs/iter_${lane}.log"
 }
 
 ( run a gev_cost_v1 gev0_a_ef 0.05; run a gev_cost_v1 gev0_a_ef 0.10 ) &

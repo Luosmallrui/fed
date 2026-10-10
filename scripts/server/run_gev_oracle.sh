@@ -8,5 +8,6 @@ for wire in 0.10 0.20; do
   echo "[$(date "+%F %T")] START gev0x_a_ef $wire" >> logs/gev_oracle.log
   "$PY" scripts/run_experiment.py --config configs/roberta_gev_oracle.yaml --task mnli \
     --method gev0x_a_ef --seed 361 --wire-ratio "$wire" >> logs/gev_oracle.log 2>&1
-  echo "[$(date "+%F %T")] DONE gev0x_a_ef $wire rc=$?" >> logs/gev_oracle.log
+  rc=$?
+  echo "[$(date "+%F %T")] DONE gev0x_a_ef $wire rc=$rc" >> logs/gev_oracle.log
 done

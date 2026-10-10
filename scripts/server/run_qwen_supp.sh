@@ -10,7 +10,8 @@ run() {  # lane config method seed [wire]
   [ -n "${5:-}" ] && extra=(--wire-ratio "$5")
   echo "[$(date "+%F %T")] START $2 $3 $4 ${5:-dense}" >> "logs/qwen_supp_$1.log"
   "$PY" scripts/run_experiment.py --config "configs/$2.yaml" --task mnli --method "$3" --seed "$4" "${extra[@]}" >> "logs/qwen_supp_$1.log" 2>&1
-  echo "[$(date "+%F %T")] DONE $2 $3 $4 ${5:-dense} rc=$?" >> "logs/qwen_supp_$1.log"
+  rc=$?
+  echo "[$(date "+%F %T")] DONE $2 $3 $4 ${5:-dense} rc=$rc" >> "logs/qwen_supp_$1.log"
 }
 ( run d qwen05b_supp gev0_a_ef 361 0.05; run d qwen05b_supp gev0_a_ef 362 0.10; run d qwen05b_supp gev0_a_ef 363 0.10; run d qwen05b_supp cab0wh_a_ef 361 0.05 ) &
 ( run e qwen05b_supp random_a_ef 361 0.05; run e qwen05b_supp random_a_ef 362 0.10; run e qwen05b_supp random_a_ef 363 0.10; run e qwen05b_lr_3e-3 random_a_ef 361 0.10 ) &

@@ -12,7 +12,8 @@ run() {  # lane config method
   echo "[$(date '+%F %T')] START $2 $3" >> "logs/qwen_main_$1.log"
   "$PY" scripts/run_experiment.py --config "configs/$2.yaml" --task mnli --method "$3" --seed 361 \
     --wire-ratio 0.10 >> "logs/qwen_main_$1.log" 2>&1
-  echo "[$(date '+%F %T')] DONE $2 $3 rc=$?" >> "logs/qwen_main_$1.log"
+  rc=$?
+  echo "[$(date '+%F %T')] DONE $2 $3 rc=$rc" >> "logs/qwen_main_$1.log"
 }
 ( run a qwen05b_main cab0_a_ef ) &
 ( run b qwen05b_main cab0wh_a_ef ) &

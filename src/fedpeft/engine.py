@@ -1434,6 +1434,10 @@ def run_experiment(
                     "partition_hash": partition.digest,
                 },
             )
+        if cab_record is not None and device.type == "cuda":
+            # Return the basis-construction gradient buffers to the driver so concurrent
+            # runs on the same GPU do not see this run's install-phase peak.
+            torch.cuda.empty_cache()
         layout_hash = _layout_hash(bundle)
         invariants_before = model_invariants(model, spec.method)
         if not invariants_before["all_base_parameters_frozen"]:

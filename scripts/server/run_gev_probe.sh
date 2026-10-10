@@ -15,7 +15,8 @@ lane() {
     echo "[$(date '+%F %T')] START $method $wire" >> "logs/gev_lane_${name}.log"
     "$PY" scripts/run_experiment.py --config "$CFG" --task mnli --method "$method" \
       --seed 361 --wire-ratio "$wire" >> "logs/gev_lane_${name}.log" 2>&1
-    echo "[$(date '+%F %T')] DONE $method $wire rc=$?" >> "logs/gev_lane_${name}.log"
+    rc=$?
+    echo "[$(date '+%F %T')] DONE $method $wire rc=$rc" >> "logs/gev_lane_${name}.log"
   done
 }
 

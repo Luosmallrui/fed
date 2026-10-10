@@ -12,7 +12,8 @@ run() {  # lane lr method [wire]
   echo "[$(date '+%F %T')] START $method lr=$lr ${wire:-dense}" >> "logs/qwen_lr_${lane}.log"
   "$PY" scripts/run_experiment.py --config "configs/qwen05b_lr_${lr}.yaml" --task mnli \
     --method "$method" --seed 361 "${extra[@]}" >> "logs/qwen_lr_${lane}.log" 2>&1
-  echo "[$(date '+%F %T')] DONE $method lr=$lr ${wire:-dense} rc=$?" >> "logs/qwen_lr_${lane}.log"
+  rc=$?
+  echo "[$(date '+%F %T')] DONE $method lr=$lr ${wire:-dense} rc=$rc" >> "logs/qwen_lr_${lane}.log"
 }
 ( run a 3e-4 random_a_ef 0.10; run a 1e-4 fedavg_lora ) &
 ( run b 1e-3 random_a_ef 0.10; run b 3e-4 fedavg_lora ) &

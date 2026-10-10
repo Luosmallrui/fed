@@ -8,5 +8,6 @@ for mult in 2x 3x; do
   echo "[$(date '+%F %T')] START random_a_ef lr $mult" >> logs/lr_control.log
   "$PY" scripts/run_experiment.py --config "configs/roberta_lr_control_${mult}.yaml" --task mnli \
     --method random_a_ef --seed 361 --wire-ratio 0.10 >> logs/lr_control.log 2>&1
-  echo "[$(date '+%F %T')] DONE random_a_ef lr $mult rc=$?" >> logs/lr_control.log
+  rc=$?
+  echo "[$(date '+%F %T')] DONE random_a_ef lr $mult rc=$rc" >> logs/lr_control.log
 done
