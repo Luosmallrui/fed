@@ -25,6 +25,18 @@ RoBERTa-base，10 个客户端，Dirichlet α=0.3，双向 Top-k + 误差反馈�
 - 不压缩时，gev0 固定 A 只训练一半参数，和完整 LoRA FedAvg 打平（9 个配对 4 胜 / 1 平 / 4 负），达到 C95 用的字节少 1.5–3 倍。
 - 完整表格（含 C95 字节与消融）：[`docs/results/confirm/CONFIRM_SUMMARY.md`](docs/results/confirm/CONFIRM_SUMMARY.md)。LLM 零训练检查：[`docs/results/llm_check/`](docs/results/llm_check/)。
 
+Qwen2.5-0.5B（decoder，MNLI，同样的 FL 设定，gev0 用低成本协议，建基 9.3 MB；[`docs/results/qwen_confirm/`](docs/results/qwen_confirm/)）：
+
+| 方法 | 5% | 10% |
+|---|---|---|
+| 完整 LoRA FedAvg（不压缩） | 0.764 | 0.764 |
+| random 固定 A | 0.757 | 0.757 |
+| cab0（梯度能量基） | 0.636 | 0.588 |
+| **gev0** | **0.754** | **0.758** |
+
+- 梯度能量基在 LLM 上同样退化：cab0 对 random 6 个配对全负（−0.145，p=0.031）。
+- gev0 修复了退化，但和 random 打平（3 胜 / 3 负）。在这个模型上，随机固定 A 本身已接近完整 LoRA，固定基的选择没有多少提升空间。
+
 ## 目录
 
 ```

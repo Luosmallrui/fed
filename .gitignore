@@ -25,6 +25,7 @@ docs/results/*
 !docs/results/qnli_dev/
 !docs/results/cab_ef_dev/
 !docs/results/llm_check/
+!docs/results/qwen_confirm/
 !docs/results/exploration/
 docs/results/exploration/*
 !docs/results/exploration/cab_anisotropy_mnli.json

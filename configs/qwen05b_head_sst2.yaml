@@ -1,0 +1,91 @@
+# Headroom check on Qwen2.5-0.5B (SST-2, alpha 0.3, seed 361, train-holdout): does a random fixed A lag
+# full LoRA (fedavg_lora, dense) here?  Only if it does can a better fixed subspace help.  Learning
+# rates carried over from the Qwen MNLI sweep (fixed-A 1e-3, dense 1e-4), not re-tuned.
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_llm3
+  output_dir: /data/home/202412012250/bishe_llm3/docs/results/qwen05b_head_sst2
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_llm3/artifacts/spectral/qwen2.5-0.5b-qv-r8-fp32.pt
+  expected_runs: 2
+model:
+  path: /data/home/202412012250/bishe_dcef/models/qwen2.5-0.5b-instruct
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - self_attn.q_proj
+  - self_attn.v_proj
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - sst2
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 361
+training:
+  rounds:
+    sst2: 30
+  local_steps:
+    sst2: 8
+  batch_size:
+    sst2: 128
+  eval_batch_size: 512
+  learning_rate: 0.001
+  head_learning_rate: 0.001
+  method_overrides:
+    fedavg_lora:
+      learning_rate:
+        sst2: 0.0001
+      head_learning_rate:
+        sst2: 0.0001
+    random_a_ef:
+      learning_rate:
+        sst2: 0.001
+      head_learning_rate:
+        sst2: 0.001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    sst2: 1
+  checkpoint_every: 1
+evaluation:
+  policy: train_holdout
+communication:
+  wire_ratios:
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+cab:
+  gamma:
+    sst2: 0.1
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  client_rank: 4
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  activation_rank: 8
+  activation_ridge: 0.001
+  basis_refine: gram
+matrix:
+  dense_methods:
+  - fedavg_lora
+  sparse_methods:
+  - random_a_ef
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []
