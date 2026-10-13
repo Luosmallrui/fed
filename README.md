@@ -70,6 +70,14 @@ docs/             研究文档；docs/results/ 只保留精简汇总，原始运
 | `eva_a_ef` | EVA 式：输入二阶矩的前 r 个特征向量 |
 | `cab0wh_a_ef` | cab0 的子空间，在子空间内白化（消融） |
 | **`gev0_a_ef` / `gev0_a_dense`** | **本方法**：广义特征向量 + 曲率归一化，压缩 / 不压缩 |
+| `full_lora_ef` | FedIT（完整 LoRA）+ Top-k + 误差反馈 |
+| `flora_dense` | FLoRA（NeurIPS 2024）：堆叠聚合，每轮合并进底座权重 |
+| `fedex_dense` | FedEx-LoRA（ACL 2025）：平均 A、B，残差合并进底座权重 |
+| `rolora_dense` / `rolora_ef` | RoLoRA（NeurIPS 2025）：每轮只训练、只发送 B 或 A，交替 |
+| `fedsvd_dense` / `fedsvd_ef` | FedSVD（NeurIPS 2025）：每轮对 BA 做 SVD 重新选 A（子空间实际不变） |
+| `fedsb` | Fed-SB（TMLR 2026）：梯度符号 SVD 得到固定 B、A，只训练 r×r 的 R；秩按预算取最大 |
+
+基线的实现与字节口径见 [`src/fedpeft/baselines.py`](src/fedpeft/baselines.py) 的模块说明。
 
 `cab:` 段控制建基协议：
 

@@ -41,7 +41,17 @@ SUPPORTED_METHODS = {
     "gev0x_a_ef",
     "gev0_a_dense",
     "eva_a_ef",
+    # Published federated LoRA baselines (fedpeft.baselines).
+    "flora_dense",
+    "fedex_dense",
+    "rolora_dense",
+    "rolora_ef",
+    "fedsvd_dense",
+    "fedsvd_ef",
+    "fedsb",
 }
+BASELINE_DENSE_ONLY_METHODS = {"flora_dense", "fedex_dense", "rolora_dense", "fedsvd_dense"}
+BASELINE_SPARSE_ONLY_METHODS = {"rolora_ef", "fedsvd_ef", "fedsb"}
 ACTIVATION_BASIS_METHODS = {
     "gev_a_ef",
     "gev0_a_ef",
@@ -253,6 +263,19 @@ def validate_config(cfg: dict[str, Any]) -> None:
         _validate_stability_config(cfg, methods)
     if CAB_METHODS.intersection(methods) or "cab" in cfg:
         _validate_cab_config(cfg)
+    misplaced = sorted(
+        BASELINE_DENSE_ONLY_METHODS.intersection({*sparse_methods, *diagnostic_sparse_methods})
+        | BASELINE_SPARSE_ONLY_METHODS.intersection({*dense_methods, *diagnostic_dense_methods})
+    )
+    if misplaced:
+        raise ValueError(f"baseline methods in the wrong matrix bucket: {misplaced}")
+    if "baselines" in cfg:
+        unknown_fields = sorted(set(cfg["baselines"]) - {"fedsb_gradient_examples", "fedsb_gradient_batch_size"})
+        if unknown_fields:
+            raise ValueError(f"unsupported baselines fields: {unknown_fields}")
+        for field in ("fedsb_gradient_examples", "fedsb_gradient_batch_size"):
+            if field in cfg["baselines"] and int(cfg["baselines"][field]) < 1:
+                raise ValueError(f"baselines.{field} must be positive")
     overrides = cfg["training"].get("method_overrides", {})
     unknown_override_methods = sorted(set(overrides) - SUPPORTED_METHODS)
     if unknown_override_methods:

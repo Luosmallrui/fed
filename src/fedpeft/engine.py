@@ -18,6 +18,19 @@ from torch import nn
 from transformers import AutoTokenizer
 
 from .aggregation import weighted_average
+from . import baselines
+from .baselines import (
+    BASELINE_CONSTRUCTION,
+    BASELINE_DENSE_METHODS,
+    BASELINE_EF_METHODS,
+    FEDEX_METHODS,
+    FEDSB_CACHE_VERSION,
+    FEDSB_METHODS,
+    FEDSVD_METHODS,
+    FLORA_METHODS,
+    MERGE_METHODS,
+    ROLORA_METHODS,
+)
 from .adapters import (
     FixedALinear,
     ModelBundle,
@@ -113,6 +126,7 @@ DENSE_METHODS = {
     "hybrid4_a_dense",
     "hybrid4_a_decay_dense",
     *CAB_DENSE_METHODS,
+    *BASELINE_DENSE_METHODS,
 }
 STABILITY_CANDIDATE_METHODS = {
     "spectral_rot_ef",
@@ -134,6 +148,7 @@ EF_METHODS = {
     "random_block_ef",
     *DCEF_METHODS,
     *CAB_EF_METHODS,
+    *BASELINE_EF_METHODS,
 }
 TOPK_NO_EF_METHODS = {"random_a_topk", "spectral_a_topk"}
 FULL_LORA_SPARSE_EF_METHODS = {"full_lora_ef", "full_lora_dcef", "full_lora_dcef_client"}
@@ -545,6 +560,8 @@ def _build_adapter_compressor(
 
 def _adapter_construction_method(method: str) -> str:
     """Map a compressor-only control to its matched adapter construction."""
+    if method in BASELINE_CONSTRUCTION:
+        return BASELINE_CONSTRUCTION[method]
     if method in DCEF_CONSTRUCTION:
         return DCEF_CONSTRUCTION[method]
     if method in CAB_DENSE_METHODS:
@@ -1224,6 +1241,90 @@ def _install_cab_basis(
     return record, setup_bytes
 
 
+def _install_fedsb(
+    *,
+    cfg: dict[str, Any],
+    spec: RunSpec,
+    model: nn.Module,
+    bundle: ModelBundle,
+    train_data: Any,
+    client_train: list[torch.Tensor],
+    device: torch.device,
+    cache_path: Path,
+    fingerprints: dict[str, str],
+) -> tuple[dict[str, Any], int]:
+    """Fed-SB: budget-matched rank, LoRA-SB bases from the summed client gradients, cached
+    beside the run so a resume installs identical bytes.  Returns (record, setup bytes)."""
+    if spec.wire_ratio is None:
+        raise ValueError("Fed-SB takes its rank from the wire budget")
+    head_bytes = encode_dense(bundle.head_layout.flatten(model)).nbytes
+    reference_bytes = 13 + 2 * full_lora_reference_numel(model, int(cfg["model"]["rank"])) + head_bytes
+    adapter_cap = math.floor(reference_bytes * spec.wire_ratio) - head_bytes
+    rank = baselines.fedsb_rank(model, adapter_cap)
+    learning_rate = float(method_task_value(cfg, "learning_rate", spec.task, spec.method))
+    section = cfg.get("baselines", {})
+    examples = int(section.get("fedsb_gradient_examples", 1024))
+    batch_size = int(section.get("fedsb_gradient_batch_size", 64))
+    expected = {
+        "version": FEDSB_CACHE_VERSION,
+        "fingerprints": fingerprints,
+        "rank": rank,
+        "learning_rate": learning_rate,
+        "examples": examples,
+    }
+    if cache_path.exists():
+        cached = torch.load(cache_path, map_location="cpu", weights_only=False)
+        mismatches = {key: (cached.get(key), value) for key, value in expected.items() if cached.get(key) != value}
+        if mismatches:
+            raise RuntimeError(f"stale Fed-SB basis cache {cache_path}; remove it to recompute: {mismatches}")
+        bases, payload_bytes = cached["bases"], int(cached["payload_bytes"])
+        baselines.load_fedsb_bases(model, bases)
+    else:
+        targets = sorted(
+            (
+                (name, module)
+                for name, module in model.named_modules()
+                if isinstance(module, baselines.LoRAXSLinear)
+            ),
+            key=lambda item: item[0],
+        )
+        weights = [module.base.weight for _, module in targets]
+        sums = [torch.zeros_like(weight, dtype=torch.float32) for weight in weights]
+        for client_id, indices in enumerate(client_train):
+            gradients = client_weight_gradients(
+                model,
+                weights,
+                train_data,
+                indices,
+                examples,
+                batch_size,
+                spec.seed * 1_000_003 - 10_007 + client_id,
+                _dtype(cfg["training"]["mixed_precision"]),
+            )
+            count = float(min(examples, int(indices.numel())))
+            for total, gradient in zip(sums, gradients):
+                total += count * gradient
+        bases, payload_bytes = baselines.install_fedsb(model, sums, rank, learning_rate)
+        del sums
+        _atomic_torch_save({**expected, "bases": bases, "payload_bytes": payload_bytes}, cache_path)
+    adapter_names = [name for name, parameter in model.named_parameters() if parameter.requires_grad and "lora_R" in name]
+    bundle.adapter_layout = TensorLayout.from_model(model, adapter_names)
+    num_clients = len(client_train)
+    record = baselines.summary_record(
+        spec.method,
+        rank=rank,
+        adapter_cap_bytes=adapter_cap,
+        dense_adapter_bytes=13 + 2 * bundle.adapter_layout.total_numel,
+        learning_rate_in_init=learning_rate,
+        gradient_examples_per_client=examples,
+        basis_broadcast_bytes_per_client=payload_bytes,
+        setup_bytes=payload_bytes * num_clients,
+        gradient_upload_counted=False,
+        assumption="only the basis broadcast is charged (lower bound on Fed-SB setup traffic)",
+    )
+    return record, payload_bytes * num_clients
+
+
 def run_experiment(
     cfg: dict[str, Any],
     spec: RunSpec,
@@ -1434,7 +1535,28 @@ def run_experiment(
                     "partition_hash": partition.digest,
                 },
             )
-        if cab_record is not None and device.type == "cuda":
+        baseline_record: dict[str, Any] | None = None
+        baseline_setup_bytes = 0
+        if spec.method in FEDSB_METHODS:
+            baseline_record, baseline_setup_bytes = _install_fedsb(
+                cfg=cfg,
+                spec=spec,
+                model=model,
+                bundle=bundle,
+                train_data=train_data,
+                client_train=client_train,
+                device=device,
+                cache_path=run_dir / "fedsb_basis.pt",
+                fingerprints={
+                    "config_hash": config_hash,
+                    "source_hash": source_hash,
+                    "model_hash": model_hash,
+                    "dataset_hash": dataset_hash,
+                    "partition_hash": partition.digest,
+                },
+            )
+            adapter_layout = bundle.adapter_layout
+        if (cab_record is not None or baseline_record is not None) and device.type == "cuda":
             # Return the basis-construction gradient buffers to the driver so concurrent
             # runs on the same GPU do not see this run's install-phase peak.
             torch.cuda.empty_cache()
@@ -1497,9 +1619,11 @@ def run_experiment(
         if spec.wire_ratio is not None:
             message_cap = math.floor(reference_message_bytes * spec.wire_ratio)
             adapter_cap = message_cap - reference_head_bytes
-            adapter_compressor = _build_adapter_compressor(
-                spec.method, adapter_layout, adapter_cap
-            )
+            if spec.method not in FEDSB_METHODS:
+                # Fed-SB's dense payload was sized to fit the cap; every packet is still checked.
+                adapter_compressor = _build_adapter_compressor(
+                    spec.method, adapter_layout, adapter_cap
+                )
         else:
             message_cap = reference_message_bytes
             adapter_cap = reference_adapter_bytes
@@ -1556,7 +1680,7 @@ def run_experiment(
                 adapter_layout.shapes + head_layout.shapes,
             )
             tracker.schema_bytes = manifest_size * (1 + int(cfg["data"]["num_clients"]))
-        tracker.setup_bytes = cab_setup_bytes
+        tracker.setup_bytes = cab_setup_bytes + baseline_setup_bytes
 
         rounds = int(task_value(cfg, "training", "rounds", spec.task))
         local_steps = int(task_value(cfg, "training", "local_steps", spec.task))
@@ -1642,6 +1766,13 @@ def run_experiment(
             global_head = checkpoint["global_head"].to(device)
             client_residuals = [x.to(device) for x in checkpoint["client_residuals"]]
             server_residual = checkpoint["server_residual"].to(device)
+            baseline_state = checkpoint.get("baseline_state")
+            if spec.method in MERGE_METHODS:
+                baselines.load_merged_weight_state(model, baseline_state["merged_weights"])
+            elif spec.method in FEDSVD_METHODS:
+                baselines.load_fixed_a_state(model, baseline_state["fixed_A"])
+            elif baseline_state is not None:
+                raise RuntimeError("checkpoint unexpectedly contains baseline state")
             if spec.method in EF_METHODS:
                 ef_state = checkpoint.get("ef_audit")
                 if not isinstance(ef_state, dict):
@@ -1732,6 +1863,13 @@ def run_experiment(
                 factor: 0 for factor in factor_slices
             }
             server_transmitted_adapter: torch.Tensor | None = None
+            round_baseline: dict[str, Any] = {}
+            rolora_mask: torch.Tensor | None = None
+            if spec.method in ROLORA_METHODS:
+                active_factor = baselines.rolora_factor(round_index)
+                rolora_mask = baselines.factor_mask(adapter_layout, active_factor, device)
+                baselines.set_trainable_factor(model, active_factor)
+                round_baseline["rolora_factor"] = active_factor
 
             if spec.method == "flasc":
                 assert adapter_compressor is not None
@@ -1796,8 +1934,14 @@ def run_experiment(
                 delta_head = head_layout.flatten(model) - start_head
                 decoded_head, head_packet = _dense_roundtrip(delta_head)
 
-                if spec.method in DENSE_METHODS:
-                    decoded_adapter, adapter_packet = _dense_roundtrip(delta_adapter)
+                if spec.method in DENSE_METHODS or spec.method in FEDSB_METHODS:
+                    if rolora_mask is not None:
+                        # RoLoRA sends only the factor it trained (the other one did not move).
+                        sent, adapter_packet = _dense_roundtrip(delta_adapter[rolora_mask])
+                        decoded_adapter = torch.zeros_like(delta_adapter)
+                        decoded_adapter[rolora_mask] = sent
+                    else:
+                        decoded_adapter, adapter_packet = _dense_roundtrip(delta_adapter)
                     packet_bytes = adapter_packet.nbytes + head_packet.nbytes
                 elif spec.method == "flasc" or spec.method in TOPK_NO_EF_METHODS:
                     assert adapter_compressor is not None
@@ -1811,7 +1955,9 @@ def run_experiment(
                     assert client_ef_transmitted is not None
                     old_residual = client_residuals[client_id]
                     corrected = delta_adapter + old_residual
-                    compressed = uplink_compressor.compress(corrected)
+                    compressed = uplink_compressor.compress(
+                        corrected if rolora_mask is None else corrected * rolora_mask
+                    )
                     decoded_adapter = compressed.reconstructed
                     if factor_slices:
                         selected = _factor_selected_counts(
@@ -1876,6 +2022,8 @@ def run_experiment(
                 client_head_updates.append(decoded_head)
                 client_weights.append(float(len(partition.train[client_id])))
 
+            if spec.method in ROLORA_METHODS:
+                baselines.set_trainable_factor(model, None)
             aggregate_adapter = weighted_average(client_adapter_updates, client_weights)
             aggregate_head = weighted_average(client_head_updates, client_weights)
 
@@ -1884,10 +2032,31 @@ def run_experiment(
                 global_head = start_head + aggregate_head
             else:
                 decoded_head_down, head_down_packet = _dense_roundtrip(aggregate_head)
-                if spec.method in DENSE_METHODS:
-                    decoded_adapter_down, adapter_down_packet = _dense_roundtrip(aggregate_adapter)
+                if spec.method in DENSE_METHODS or spec.method in FEDSB_METHODS:
+                    if rolora_mask is not None:
+                        sent, adapter_down_packet = _dense_roundtrip(aggregate_adapter[rolora_mask])
+                        decoded_adapter_down = torch.zeros_like(aggregate_adapter)
+                        decoded_adapter_down[rolora_mask] = sent
+                    else:
+                        decoded_adapter_down, adapter_down_packet = _dense_roundtrip(aggregate_adapter)
                     global_adapter = start_adapter + decoded_adapter_down
                     packet_bytes = adapter_down_packet.nbytes + head_down_packet.nbytes
+                    if spec.method in MERGE_METHODS:
+                        client_adapters = [start_adapter + update for update in client_adapter_updates]
+                        shared = global_adapter if spec.method in FEDEX_METHODS else None
+                        baselines.merge_client_products(
+                            model, adapter_layout, client_adapters, client_weights, shared
+                        )
+                        merge_bytes, merge_encoding = baselines.stacked_downlink_bytes(
+                            adapter_layout, client_adapters, client_weights, shared
+                        )
+                        packet_bytes = merge_bytes + head_down_packet.nbytes
+                        round_baseline["downlink_encoding"] = merge_encoding
+                        if spec.method in FLORA_METHODS:
+                            # The product now lives in the frozen weights; restart from a fresh LoRA.
+                            global_adapter = baselines.flora_fresh_adapter(
+                                model, adapter_layout, int(cfg["model"]["basis_seed"]), round_index + 1
+                            )
                 elif spec.method in TOPK_NO_EF_METHODS:
                     assert adapter_compressor is not None
                     compressed = adapter_compressor.compress(aggregate_adapter)
@@ -1909,7 +2078,9 @@ def run_experiment(
                     else:
                         corrected = aggregate_adapter + server_residual
                         server_ledger_input = aggregate_adapter
-                    compressed = adapter_compressor.compress(corrected)
+                    compressed = adapter_compressor.compress(
+                        corrected if rolora_mask is None else corrected * rolora_mask
+                    )
                     if factor_slices:
                         server_factor_selected_counts = _factor_selected_counts(
                             compressed.packet, factor_slices, factor_index_map
@@ -1946,6 +2117,21 @@ def run_experiment(
                 tracker.download(packet_bytes, num_clients)
                 if spec.wire_ratio is not None and packet_bytes > message_cap:
                     raise AssertionError(f"downlink packet {packet_bytes} exceeds cap {message_cap}")
+                if spec.method in FEDSVD_METHODS:
+                    # Every client refactorises the same B A locally: no extra bytes.  EF residuals
+                    # live in B coordinates and move with the basis; the audit ledger restarts from
+                    # the rotated residuals so per-round conservation stays checkable.
+                    round_baseline["fedsvd_refactor_error"] = baselines.fedsvd_reparameterize(
+                        model, adapter_layout, [global_adapter, server_residual, *client_residuals]
+                    )
+                    if spec.method in EF_METHODS:
+                        assert client_ef_inputs is not None and client_ef_transmitted is not None
+                        assert server_ef_inputs is not None and server_ef_transmitted is not None
+                        for client_id in range(num_clients):
+                            client_ef_inputs[client_id] = audit_projection(client_residuals[client_id])
+                        client_ef_transmitted.zero_()
+                        server_ef_inputs.copy_(audit_projection(server_residual))
+                        server_ef_transmitted.zero_()
 
             should_evaluate = (round_index + 1) % eval_every == 0 or round_index + 1 == rounds
             adapter_layout.assign(model, global_adapter)
@@ -1989,6 +2175,8 @@ def run_experiment(
                 "adapter_update_norm": float(torch.linalg.vector_norm(aggregate_adapter).item()),
                 "head_update_norm": float(torch.linalg.vector_norm(aggregate_head).item()),
             }
+            if round_baseline:
+                round_diagnostics["baseline"] = round_baseline
             if consensus_diagnostics:
                 round_diagnostics["consensus"] = _consensus_statistics(
                     consensus_local,
@@ -2096,6 +2284,11 @@ def run_experiment(
                         "global_head": global_head.cpu(),
                         "client_residuals": [x.cpu() for x in client_residuals],
                         "server_residual": server_residual.cpu(),
+                        "baseline_state": {"merged_weights": baselines.merged_weight_state(model)}
+                        if spec.method in MERGE_METHODS
+                        else {"fixed_A": baselines.fixed_a_state(model)}
+                        if spec.method in FEDSVD_METHODS
+                        else None,
                         "wire_tracker": asdict(tracker),
                         "ef_audit": ef_audit_checkpoint,
                         "dcef_state": None
@@ -2116,7 +2309,10 @@ def run_experiment(
         if final["primary_metric"] is None:
             raise RuntimeError("the final round must include an evaluation")
         invariants_after = model_invariants(model, spec.method)
-        if invariants_before["fixed_basis_hash"] != invariants_after["fixed_basis_hash"]:
+        if (
+            invariants_before["fixed_basis_hash"] != invariants_after["fixed_basis_hash"]
+            and spec.method not in FEDSVD_METHODS
+        ):
             raise RuntimeError("a frozen basis changed during training")
         summary = {
             "schema_version": 2,
@@ -2191,6 +2387,14 @@ def run_experiment(
                     else "no fixed basis"
                 ),
             }
+            if cab_record is None and baseline_record is None
+            else {
+                "assumed_basis_bytes": int(baseline_record["basis_broadcast_bytes_per_client"]),
+                "basis_hash_handshake_bytes_per_client": 0,
+                "fallback_fp16_basis_bytes_per_client": 0,
+                "setup_bytes_in_delivered_total": int(baseline_record["setup_bytes"]),
+                "assumption": str(baseline_record["assumption"]),
+            }
             if cab_record is None
             else {
                 "assumed_basis_bytes": int(cab_record["downlink_basis_bytes_per_client"]),
@@ -2203,6 +2407,11 @@ def run_experiment(
                 ),
             },
             "cab": cab_record,
+            "baseline": baseline_record
+            if baseline_record is not None
+            else {"method": spec.method, "construction": BASELINE_CONSTRUCTION[spec.method]}
+            if spec.method in BASELINE_CONSTRUCTION
+            else None,
             "data": {
                 "task": spec.task,
                 "num_clients": num_clients,

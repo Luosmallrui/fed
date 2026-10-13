@@ -42,6 +42,8 @@ FIXED_SPECTRAL_METHODS = {
     "spectral_a_dense",
     *STABILITY_SPECTRAL_METHODS,
 }
+# Fixed A that is deliberately not row-orthonormal (PEFT Kaiming init: FFA-LoRA, FedSVD).
+NON_ORTHONORMAL_FIXED_A_METHODS = {"ffa_lora", "fedsvd_dense", "fedsvd_ef"}
 
 
 class RobertaLinearClassifier(nn.Module):
@@ -508,6 +510,20 @@ def build_model(
                     dropout,
                     basis_audit=basis_audit,
                 )
+        elif method == "fedsb":
+            # Placeholder; the data-dependent bases and the budget-matched rank are
+            # installed by fedpeft.baselines.install_fedsb before training.
+            replacement = LoRAXSLinear(
+                base,
+                torch.zeros(base.out_features, rank, device=base.weight.device),
+                torch.ones(rank, device=base.weight.device),
+                torch.zeros(rank, base.in_features, device=base.weight.device),
+                rank,
+                float(rank),
+                0.0,
+                0.0,
+                basis_seed + index,
+            )
         else:
             raise ValueError(f"unsupported method: {method}")
         parent, child = _module_parent(model, name)
@@ -585,7 +601,7 @@ def model_invariants(model: nn.Module, method: str) -> dict[str, float | int | s
             value = module.fixed_A.detach().float()
             digest.update(name.encode())
             digest.update(value.cpu().contiguous().numpy().tobytes())
-            if method != "ffa_lora" and method not in WHITENED_METHODS:
+            if method not in NON_ORTHONORMAL_FIXED_A_METHODS and method not in WHITENED_METHODS:
                 # Activation-whitened bases are deliberately not row-orthonormal.
                 # Audit in CPU float64 so CUDA TF32 acceleration does not make
                 # a valid orthonormal basis fail the invariant check.

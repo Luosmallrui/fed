@@ -155,8 +155,14 @@ def technical_audit(summary: dict[str, Any] | None, method: str) -> tuple[bool, 
         reasons.append("WIRE_CAP")
     if invariants.get("finite_metrics") is not True:
         reasons.append("NON_FINITE_METRIC")
-    if invariants.get("basis_unchanged") is not True:
+    # FedSVD re-factorises its A every round by design.
+    if invariants.get("basis_unchanged") is not True and not method.startswith("fedsvd"):
         reasons.append("BASIS_CHANGED")
+    if method == "fedsb":
+        baseline = summary.get("baseline") or {}
+        setup = int(summary.get("final", {}).get("wire", {}).get("setup_bytes", -1))
+        if setup != int(baseline.get("setup_bytes", -2)) or setup <= 0:
+            reasons.append("FEDSB_SETUP_BYTES_NOT_COUNTED")
     if float(invariants.get("ef_conservation_max", 0.0)) > CONSERVATION_LIMIT:
         reasons.append("EF_LEDGER")
     if "dcef" in method:
