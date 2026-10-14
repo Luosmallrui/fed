@@ -48,3 +48,9 @@ docs/results/exploration/*
 /refs.bib
 *.pptx
 docs/proposals/*.tex
+/figdata/
+/figures/
+/svg_editable/
+/*.jpeg
+/*.jpg
+/*.png

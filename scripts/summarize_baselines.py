@@ -8,7 +8,10 @@ C95 bytes, the mean delivered bytes per round, and paired seed-level comparisons
 against every baseline (|delta| <= 0.003 is a tie; exact two-sided sign test).
 
 Usage (server):
-  python scripts/summarize_baselines.py --out <dir> <run_root> [<run_root> ...]
+  python scripts/summarize_baselines.py --out <dir> [--override <run_root>] <run_root> [<run_root> ...]
+
+--override loads one more root whose runs replace same-key runs from the others (used for the
+gev0 rerun at its own swept learning rates); every replaced run is listed in the summary.
 """
 
 from __future__ import annotations
@@ -56,10 +59,13 @@ def sign_test(wins: int, losses: int) -> float:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", required=True)
+    parser.add_argument("--override")
     parser.add_argument("roots", nargs="+")
     args = parser.parse_args()
     runs: dict[tuple[str, str, int, float | None], dict] = {}
-    for root in args.roots:
+    replaced: list[tuple[str, str, int, float | None]] = []
+    sources = [(root, False) for root in args.roots] + ([(args.override, True)] if args.override else [])
+    for root, overriding in sources:
         for path in sorted(Path(root).glob("*/summary.json")):
             summary = json.loads(path.read_text())
             if summary.get("status") != "COMPLETE":
@@ -68,7 +74,9 @@ def main() -> None:
             wire = spec.get("wire_ratio")
             key = (spec["task"], spec["method"], int(spec["seed"]), None if wire is None else round(float(wire), 2))
             if key in runs:
-                raise SystemExit(f"duplicate run {key} in {path}")
+                if not overriding:
+                    raise SystemExit(f"duplicate run {key} in {path}")
+                replaced.append(key)
             runs[key] = summary
     seeds = sorted({key[2] for key in runs})
 
@@ -125,6 +133,12 @@ def main() -> None:
         "median C95 bytes including one-time setup).  C95 = 95% of the same seed's dense FedIT final score.",
         "",
     ]
+    if replaced:
+        lines += [
+            f"Runs replaced from `{args.override}` ({len(replaced)}): "
+            + ", ".join(sorted({f"{t}/{m}" for t, m, _, _ in replaced})),
+            "",
+        ]
     for task in TASKS:
         lines += [f"## {task.upper()}", "", "### Uncompressed", "", "| Method | final (C95) | MB / round |", "|---|---|---:|"]
         for method in DENSE:

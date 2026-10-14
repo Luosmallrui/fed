@@ -13,8 +13,17 @@ main  Reads the dev results and picks, per task and method, the learning rate wi
       seeds 1001-1003, budgets 5/10/20%.  gev0 / FedIT / FFA-LoRA runs are reused from
       confirm_main, so they are not repeated here.
 
-Usage:  python scripts/make_baseline_configs.py dev | dev2
-        python scripts/make_baseline_configs.py main <dev results root>   (on the server)
+gev0dev   Symmetric check: gev0 had inherited FFA-LoRA's rates, while every baseline was swept.
+          Same rule as the baselines: sweep gev0_a_dense over {1e-4, 3e-4, 1e-3, 3e-3, 1e-2}
+          (train-holdout, seed 42), pick the best last-3 mean, gev0_a_ef shares it.
+gev0main  For every task whose pick differs from the confirmation rate, rerun gev0_a_dense and
+          gev0_a_ef on the confirmation protocol (configs/roberta_gev0_retuned.yaml), whichever
+          way the result goes.  Writes nothing when no rate changes.
+gev0repro The confirmation config relocated to this code tree, to check that a gev0 run
+          reproduces confirm_main exactly here.
+
+Usage:  python scripts/make_baseline_configs.py dev | dev2 | gev0dev | gev0repro
+        python scripts/make_baseline_configs.py main | gev0main <dev results root>   (on the server)
 """
 
 from __future__ import annotations
@@ -109,6 +118,81 @@ def dev2() -> None:
         )
 
 
+GEV0_GRID = ("1e-4", "3e-4", "1e-3", "3e-3", "1e-2")
+
+
+def confirm_config() -> dict:
+    c = yaml.safe_load((ROOT / "configs" / "roberta_confirm_main.yaml").read_text())
+    c["project"]["root"] = SERVER
+    c["project"]["spectral_cache"] = f"{SERVER}/artifacts/spectral/roberta-base-qv-r8-fp32.pt"
+    return c
+
+
+def gev0dev() -> None:
+    for tag in GEV0_GRID:
+        c = confirm_config()
+        rate = float(tag)
+        c["project"]["phase"] = "tune"
+        c["project"]["output_dir"] = f"{SERVER}/docs/results/gev0_dev_lr_{tag}"
+        c["evaluation"] = {"policy": "train_holdout"}
+        c["data"]["partition_seeds"] = [42]
+        c["training"]["learning_rate"] = rate
+        c["training"]["head_learning_rate"] = rate
+        c["training"]["method_overrides"] = {"gev0_a_dense": lr_overrides(rate)}
+        c["communication"]["wire_ratios"] = [0.1]
+        c["matrix"]["dense_methods"] = ["gev0_a_dense"]
+        c["matrix"]["sparse_methods"] = []
+        c["project"]["expected_runs"] = len(TASKS)
+        write(f"roberta_gev0_dev_lr_{tag}", c, f"gev0 learning-rate sweep, lr {tag} (train-holdout, seed 42), same rule as the baselines.")
+
+
+def gev0repro() -> None:
+    c = confirm_config()
+    c["project"]["output_dir"] = f"{SERVER}/docs/results/gev0_repro"
+    write("roberta_gev0_repro", c, "confirm_main relocated to bishe_base: one gev0 run must reproduce confirm_main exactly.")
+
+
+def gev0main(dev_root: Path) -> None:
+    confirm = yaml.safe_load((ROOT / "configs" / "roberta_confirm_main.yaml").read_text())
+    current = confirm["training"]["method_overrides"]["gev0_a_dense"]["learning_rate"]
+    scores: dict[str, dict[str, float]] = {}
+    for tag in GEV0_GRID:
+        for task in TASKS:
+            value = last3(dev_root / f"gev0_dev_lr_{tag}" / f"{task}__gev0_a_dense__seed-42__dense")
+            if value is None:
+                raise SystemExit(f"missing gev0 dev run: lr {tag} {task}")
+            scores.setdefault(task, {})[tag] = value
+    chosen = {task: max(values, key=values.get) for task, values in scores.items()}
+    changed = [task for task in TASKS if float(chosen[task]) != float(current[task])]
+    record = {"scores": scores, "chosen": chosen, "confirmation_rates": current, "changed_tasks": changed}
+    print(json.dumps(record, indent=1))
+    (ROOT / "logs").mkdir(exist_ok=True)
+    (ROOT / "logs" / "gev0_lr_choice.json").write_text(json.dumps(record, indent=1))
+    if not changed:
+        print("UNCHANGED")
+        return
+    c = confirm_config()
+    c["project"]["output_dir"] = f"{SERVER}/docs/results/gev0_retuned"
+    c["data"]["tasks"] = changed
+    for key in ("rounds", "local_steps", "batch_size", "eval_every"):
+        c["training"][key] = {t: v for t, v in c["training"][key].items() if t in changed}
+    rates = {task: float(chosen[task]) for task in changed}
+    c["training"]["method_overrides"] = {
+        m: {"learning_rate": dict(rates), "head_learning_rate": dict(rates)} for m in ("gev0_a_dense", "gev0_a_ef")
+    }
+    for key in ("gamma",):
+        c["cab"][key] = {t: v for t, v in c["cab"][key].items() if t in changed}
+    c["matrix"]["dense_methods"] = ["gev0_a_dense"]
+    c["matrix"]["sparse_methods"] = ["gev0_a_ef"]
+    c["project"]["expected_runs"] = len(changed) * 3 * (1 + 3)
+    write(
+        "roberta_gev0_retuned",
+        c,
+        f"gev0 rerun on the confirmation protocol for tasks whose swept rate changed: {json.dumps(rates)} "
+        f"(confirmation rates were {json.dumps(current)}).",
+    )
+
+
 def last3(path: Path) -> float | None:
     summary = path / "summary.json"
     if not summary.exists():
@@ -164,6 +248,12 @@ if __name__ == "__main__":
         dev()
     elif sys.argv[1:2] == ["dev2"]:
         dev2()
+    elif sys.argv[1:2] == ["gev0dev"]:
+        gev0dev()
+    elif sys.argv[1:2] == ["gev0repro"]:
+        gev0repro()
+    elif sys.argv[1:2] == ["gev0main"] and len(sys.argv) == 3:
+        gev0main(Path(sys.argv[2]))
     elif sys.argv[1:2] == ["main"] and len(sys.argv) == 3:
         main_config(Path(sys.argv[2]))
     else:
