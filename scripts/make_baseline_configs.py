@@ -3,13 +3,17 @@
 dev   One config per learning rate (train-holdout, seed 42, same rounds / steps / clients as
       configs/roberta_confirm_main.yaml).  Each dense baseline is swept over {3e-4, 1e-3, 3e-3},
       Fed-SB (10% budget) over {1e-3, 3e-3, 1e-2} (it trains only an r x r matrix).
+dev2  Extends the grid wherever the first sweep picked a boundary value: Fed-SB down to
+      {1e-4, 3e-4} (SST-2 / MNLI picked 1e-3), FLoRA down to 1e-4 (QNLI picked 3e-4), RoLoRA and
+      FedSVD up to 1e-2 on SST-2 (picked 3e-3); then FLoRA down to 3e-5 on QNLI (picked 1e-4).
+      Separate configs keep the completed runs valid.
 main  Reads the dev results and picks, per task and method, the learning rate with the best
       mean of the last three evaluations; the Top-k/EF variants reuse the rate of their dense
       counterpart, FedIT + Top-k/EF reuses FedAvg-LoRA's confirmed rate.  Official validation,
       seeds 1001-1003, budgets 5/10/20%.  gev0 / FedIT / FFA-LoRA runs are reused from
       confirm_main, so they are not repeated here.
 
-Usage:  python scripts/make_baseline_configs.py dev
+Usage:  python scripts/make_baseline_configs.py dev | dev2
         python scripts/make_baseline_configs.py main <dev results root>   (on the server)
 """
 
@@ -27,6 +31,14 @@ SERVER = "/data/home/202412012250/bishe_base"
 TASKS = ("sst2", "mnli", "qnli")
 DENSE = ("flora_dense", "fedex_dense", "rolora_dense", "fedsvd_dense")
 GRID = {"3e-4": DENSE, "1e-3": (*DENSE, "fedsb"), "3e-3": (*DENSE, "fedsb"), "1e-2": ("fedsb",)}
+# tag -> (methods, tasks)
+GRID2 = {
+    "1e-4": (("flora_dense", "fedsb"), TASKS),
+    "3e-4": (("fedsb",), TASKS),
+    "1e-2": (("rolora_dense", "fedsvd_dense"), ("sst2",)),
+    # second extension: FLoRA on QNLI picked 1e-4 after the first one
+    "3e-5": (("flora_dense",), ("qnli",)),
+}
 EF_SHARES = {"rolora_ef": "rolora_dense", "fedsvd_ef": "fedsvd_dense"}
 
 
@@ -71,6 +83,32 @@ def dev() -> None:
         )
 
 
+def dev2() -> None:
+    for tag, (methods, tasks) in GRID2.items():
+        c = base_config()
+        rate = float(tag)
+        c["project"]["phase"] = "tune"
+        c["project"]["output_dir"] = f"{SERVER}/docs/results/baselines_dev2_lr_{tag}"
+        c["evaluation"] = {"policy": "train_holdout"}
+        c["data"]["tasks"] = list(tasks)
+        c["data"]["partition_seeds"] = [42]
+        c["training"]["learning_rate"] = rate
+        c["training"]["head_learning_rate"] = rate
+        c["training"]["method_overrides"] = {m: lr_overrides(rate) for m in methods}
+        for key in ("rounds", "local_steps", "batch_size", "eval_every"):
+            c["training"][key] = {t: v for t, v in c["training"][key].items() if t in tasks}
+        c["communication"]["wire_ratios"] = [0.1]
+        c["matrix"]["dense_methods"] = [m for m in methods if m != "fedsb"]
+        c["matrix"]["sparse_methods"] = [m for m in methods if m == "fedsb"]
+        c["project"]["expected_runs"] = len(tasks) * len(methods)
+        write(
+            f"roberta_baselines_dev2_lr_{tag}",
+            c,
+            f"Baseline learning-rate sweep extension, lr {tag}: {', '.join(methods)} on {', '.join(tasks)} "
+            "(train-holdout, seed 42; Fed-SB at the 10% budget).",
+        )
+
+
 def last3(path: Path) -> float | None:
     summary = path / "summary.json"
     if not summary.exists():
@@ -84,13 +122,15 @@ def last3(path: Path) -> float | None:
 
 def main_config(dev_root: Path) -> None:
     scores: dict[str, dict[str, dict[str, float]]] = {}
-    for tag, methods in GRID.items():
+    sweeps = [("baselines_dev_lr_", tag, methods, TASKS) for tag, methods in GRID.items()]
+    sweeps += [("baselines_dev2_lr_", tag, methods, tasks) for tag, (methods, tasks) in GRID2.items()]
+    for prefix, tag, methods, tasks in sweeps:
         for method in methods:
-            for task in TASKS:
+            for task in tasks:
                 suffix = "wire-10" if method == "fedsb" else "dense"
-                value = last3(dev_root / f"baselines_dev_lr_{tag}" / f"{task}__{method}__seed-42__{suffix}")
+                value = last3(dev_root / f"{prefix}{tag}" / f"{task}__{method}__seed-42__{suffix}")
                 if value is None:
-                    raise SystemExit(f"missing dev run: lr {tag} {task} {method}")
+                    raise SystemExit(f"missing dev run: {prefix}{tag} {task} {method}")
                 scores.setdefault(method, {}).setdefault(task, {})[tag] = value
     chosen = {m: {t: max(v, key=v.get) for t, v in by_task.items()} for m, by_task in scores.items()}
     print(json.dumps({"scores": scores, "chosen": chosen}, indent=1))
@@ -122,6 +162,8 @@ def main_config(dev_root: Path) -> None:
 if __name__ == "__main__":
     if sys.argv[1:2] == ["dev"]:
         dev()
+    elif sys.argv[1:2] == ["dev2"]:
+        dev2()
     elif sys.argv[1:2] == ["main"] and len(sys.argv) == 3:
         main_config(Path(sys.argv[2]))
     else:

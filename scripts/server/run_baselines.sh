@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Published federated LoRA baselines on the RoBERTa confirmation protocol:
 #   1. learning-rate sweep (configs/roberta_baselines_dev_lr_*.yaml, train-holdout, seed 42),
+#      then its boundary extension (configs/roberta_baselines_dev2_lr_*.yaml),
 #   2. pick rates by best last-3 mean and write configs/roberta_baselines_main.yaml,
 #   3. confirmation runs (official validation, seeds 1001-1003, 144 runs),
 #   4. report and the pooled comparison with confirm_main (gev0 / FedIT / FFA-LoRA).
@@ -22,6 +23,18 @@ for tag in 3e-4 1e-3 3e-3 1e-2; do
   rc=$?
   echo "[$(date '+%F %T')] DONE $name rc=$rc" >> "$LOG"
 done
+
+# Grid extension where the first sweep picked a boundary value (3 configs in parallel).
+pids=()
+for spec in 1e-4:4 3e-4:2 1e-2:2; do
+  tag=${spec%%:*}; workers=${spec#*:}
+  name=roberta_baselines_dev2_lr_$tag
+  echo "[$(date '+%F %T')] START $name" >> "$LOG"
+  ( cd "$ROOT" && "$PY" scripts/run_parallel.py --config "$ROOT/configs/$name.yaml" --workers "$workers" --threads-per-run 1 \
+      >> "$ROOT/logs/run_$name.log" 2>&1; rc=$?; echo "[$(date '+%F %T')] DONE $name rc=$rc" >> "$LOG" ) &
+  pids+=($!)
+done
+wait "${pids[@]}"
 
 cd "$ROOT"
 "$PY" scripts/make_baseline_configs.py main "$ROOT/docs/results" >> "$LOG" 2>&1

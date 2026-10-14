@@ -9,6 +9,7 @@
 | `results/gev_dev/`, `results/qnli_dev/`, `results/cab_ef_dev/` | 开发阶段汇总与报告 |
 | `results/llm_check/` | Qwen2.5 零训练各向异性检查 |
 | `results/qwen_confirm/` | Qwen2.5-0.5B 确认阶段报告（MNLI，种子 1001–1003） |
+| `results/baselines/` | 已发表联邦 LoRA 基线（FLoRA、FedEx-LoRA、RoLoRA、FedSVD、Fed-SB、FedIT+EF）与 gev0 的确认对比，学习率选择 |
 | `results/exploration/cab_anisotropy_mnli.json` | RoBERTa 各种基的各向异性检查 |
 | `LEGACY_STABILITY_STUDY.md` | 早期稳定性协议阶段的 README（归档） |
 | `CURRENT_RESULTS_SUMMARY.md`, `EXPERIMENT_PROTOCOL.md`, `ACL_PAPER_PLAN.md`, `WWW_IDEA_ASSESSMENT_20260927.md`, `REMOTE_SYNC_20260920.md` | 早期阶段的结果、协议与计划（归档） |

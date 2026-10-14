@@ -25,6 +25,21 @@ RoBERTa-base，10 个客户端，Dirichlet α=0.3，双向 Top-k + 误差反馈�
 - 不压缩时，gev0 固定 A 只训练一半参数，和完整 LoRA FedAvg 打平（9 个配对 4 胜 / 1 平 / 4 负），达到 C95 用的字节少 1.5–3 倍。
 - 完整表格（含 C95 字节与消融）：[`docs/results/confirm/CONFIRM_SUMMARY.md`](docs/results/confirm/CONFIRM_SUMMARY.md)。LLM 零训练检查：[`docs/results/llm_check/`](docs/results/llm_check/)。
 
+与已发表的联邦 LoRA 方法比较（同一协议，各基线单独扫过学习率；gev0 沿用 FFA-LoRA 的学习率；[`docs/results/baselines/`](docs/results/baselines/BASELINES_SUMMARY.md)）：
+
+| gev0 − 基线（压缩，27 对） | 平均差 | 胜 / 平 / 负 | p |
+|---|---:|---:|---:|
+| FFA-LoRA（ICLR'24）+ Top-k/EF | +0.052 | 27 / 0 / 0 | 1.5e-8 |
+| FedIT + Top-k/EF | +0.032 | 19 / 5 / 3 | 8.6e-4 |
+| RoLoRA（NeurIPS'25）+ Top-k/EF | +0.037 | 24 / 0 / 3 | 4.9e-5 |
+| FedSVD（NeurIPS'25）+ Top-k/EF | +0.018 | 20 / 1 / 6 | 0.0094 |
+| Fed-SB（TMLR'26，秩按预算取） | +0.151 | 25 / 0 / 2 | 5.6e-6 |
+
+- 压缩时 gev0 是唯一在所有任务、预算、种子下都达到 C95 的方法（27/27；次好的 FedSVD 22/27）。
+- 不压缩时 gev0 与 FedIT、FedEx-LoRA（ACL'25）精度打平，达到 C95 的字节在 MNLI / QNLI 上分别少 3 / 2.5 倍（对 FedIT）和 10 / 18 倍（对 FedEx-LoRA）。FLoRA（NeurIPS'24）和 FedEx-LoRA 为了精确聚合，每轮通信是 FedIT 的 5.5 倍。
+- Fed-SB 的固定基来自梯度奇异向量，和 cab0 一样在 MNLI / QNLI 上明显退化。
+- 弱点：SST-2 的 5% / 10% 预算下 FedSVD + Top-k/EF 更好（0.873 / 0.882 对 0.833 / 0.872）。
+
 Qwen2.5-0.5B（decoder，MNLI，同样的 FL 设定，gev0 用低成本协议，建基 9.3 MB；[`docs/results/qwen_confirm/`](docs/results/qwen_confirm/)）：
 
 | 方法 | 5% | 10% |

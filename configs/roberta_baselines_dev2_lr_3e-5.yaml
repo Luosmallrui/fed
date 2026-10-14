@@ -1,0 +1,78 @@
+# Baseline learning-rate sweep extension, lr 3e-5: flora_dense on qnli (train-holdout, seed 42; Fed-SB at the 10% budget).
+project:
+  phase: tune
+  root: /data/home/202412012250/bishe_base
+  output_dir: /data/home/202412012250/bishe_base/docs/results/baselines_dev2_lr_3e-5
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_base/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 1
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - attention.self.query
+  - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - qnli
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 42
+training:
+  rounds:
+    qnli: 30
+  local_steps:
+    qnli: 16
+  batch_size:
+    qnli: 128
+  eval_batch_size: 512
+  learning_rate: 3.0e-05
+  head_learning_rate: 3.0e-05
+  method_overrides:
+    flora_dense:
+      learning_rate:
+        sst2: 3.0e-05
+        mnli: 3.0e-05
+        qnli: 3.0e-05
+      head_learning_rate:
+        sst2: 3.0e-05
+        mnli: 3.0e-05
+        qnli: 3.0e-05
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    qnli: 3
+  checkpoint_every: 1
+evaluation:
+  policy: train_holdout
+communication:
+  wire_ratios:
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+matrix:
+  dense_methods:
+  - flora_dense
+  sparse_methods: []
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []
+baselines:
+  fedsb_gradient_examples: 1024
+  fedsb_gradient_batch_size: 64
