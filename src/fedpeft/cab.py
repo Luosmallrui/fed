@@ -63,16 +63,18 @@ from .wire import decode_packet, encode_dense
 #                             the counterpart of random_a_dense (FFA-LoRA style)
 #   eva_a_ef                  baseline: EVA-style A = top-r eigenvectors of the input
 #                             second moment (row-orthonormal, no gradients)
+#   evawh_a_ef                EVA subspace, whitened within (A Sigma_x A^T = c^2 I): tests the
+#                             normalization as a fix for a published data-driven basis
 GEV_METHODS = {"gev_a_ef", "gev0_a_ef", "gev0x_a_ef", "gev0_a_dense"}
 ORACLE_METHODS = {"gev0x_a_ef"}
-WHITENED_SUBSPACE_METHODS = {"cab0wh_a_ef", "randomwh_a_ef"}
+WHITENED_SUBSPACE_METHODS = {"cab0wh_a_ef", "randomwh_a_ef", "evawh_a_ef"}
 EVA_METHODS = {"eva_a_ef"}
 # Rows deliberately not orthonormal (A Sigma_x A^T = c^2 I).
 WHITENED_METHODS = GEV_METHODS | WHITENED_SUBSPACE_METHODS
 # Methods whose clients upload an input second-moment sketch.
 ACTIVATION_METHODS = WHITENED_METHODS | EVA_METHODS
 # Basis built without any gradient upload; their gradients are simulation-only diagnostics.
-GRADIENT_FREE_METHODS = {"randomwh_a_ef", "eva_a_ef"}
+GRADIENT_FREE_METHODS = {"randomwh_a_ef", "eva_a_ef", "evawh_a_ef"}
 # CAB-protocol bases synchronised without compression (no wire ratio, kappa = 0).
 CAB_DENSE_METHODS = {"gev0_a_dense"}
 PAYLOAD_DTYPES = {"float16", "int8"}

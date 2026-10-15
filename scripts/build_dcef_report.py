@@ -75,7 +75,7 @@ COMPARISONS = (
 )
 CAB_PREFIX = "cab"
 # Methods that install a CAB-protocol basis without the "cab" name prefix.
-CAB_FAMILY_EXTRA = {"gev_a_ef", "gev0_a_ef", "gev0x_a_ef", "randomwh_a_ef", "eva_a_ef", "gev0_a_dense"}
+CAB_FAMILY_EXTRA = {"gev_a_ef", "gev0_a_ef", "gev0x_a_ef", "randomwh_a_ef", "eva_a_ef", "evawh_a_ef", "gev0_a_dense"}
 
 
 def is_cab_family(method: str) -> bool:
@@ -158,7 +158,7 @@ def technical_audit(summary: dict[str, Any] | None, method: str) -> tuple[bool, 
     # FedSVD re-factorises its A every round by design.
     if invariants.get("basis_unchanged") is not True and not method.startswith("fedsvd"):
         reasons.append("BASIS_CHANGED")
-    if method == "fedsb":
+    if method.startswith("fedsb"):
         baseline = summary.get("baseline") or {}
         setup = int(summary.get("final", {}).get("wire", {}).get("setup_bytes", -1))
         if setup != int(baseline.get("setup_bytes", -2)) or setup <= 0:

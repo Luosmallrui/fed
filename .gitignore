@@ -27,6 +27,8 @@ docs/results/*
 !docs/results/llm_check/
 !docs/results/qwen_confirm/
 !docs/results/baselines/
+!docs/results/conditioning/
+!docs/results/normfix/
 !docs/results/exploration/
 docs/results/exploration/*
 !docs/results/exploration/cab_anisotropy_mnli.json

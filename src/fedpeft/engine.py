@@ -26,6 +26,7 @@ from .baselines import (
     FEDEX_METHODS,
     FEDSB_CACHE_VERSION,
     FEDSB_METHODS,
+    FEDSB_NORMALIZED_METHODS,
     FEDSVD_METHODS,
     FLORA_METHODS,
     MERGE_METHODS,
@@ -1031,6 +1032,11 @@ def _install_cab_basis(
             values = top_eigen_rows(matrices["reported_m"], rank)[1]
             rows = whiten_rows(placeholder, sigma_reported[group], ridge)
             exact_rows = whiten_rows(placeholder, sigma_exact[group], ridge)
+        elif spec.method == "evawh_a_ef":
+            # EVA's subspace, re-mixed so that A Sigma A^T is a multiple of I.
+            eva_rows, values = top_eigen_rows(sigma_reported[group], rank)
+            rows = whiten_rows(eva_rows, sigma_reported[group], ridge)
+            exact_rows = whiten_rows(top_eigen_rows(sigma_exact[group], rank)[0], sigma_exact[group], ridge)
         elif spec.method in EVA_METHODS:
             # EVA: directions of largest input second moment, row-orthonormal.
             rows, values = top_eigen_rows(sigma_reported[group], rank)
@@ -1271,14 +1277,19 @@ def _install_fedsb(
         "rank": rank,
         "learning_rate": learning_rate,
         "examples": examples,
+        "normalized": spec.method in FEDSB_NORMALIZED_METHODS,
     }
     if cache_path.exists():
         cached = torch.load(cache_path, map_location="cpu", weights_only=False)
+        cached.setdefault("normalized", False)  # caches written before fedsb_norm existed
         mismatches = {key: (cached.get(key), value) for key, value in expected.items() if cached.get(key) != value}
         if mismatches:
             raise RuntimeError(f"stale Fed-SB basis cache {cache_path}; remove it to recompute: {mismatches}")
         bases, payload_bytes = cached["bases"], int(cached["payload_bytes"])
         baselines.load_fedsb_bases(model, bases)
+        mixes, gram_bytes = cached.get("mixes"), int(cached.get("gram_bytes", 0))
+        if spec.method in FEDSB_NORMALIZED_METHODS:
+            baselines.apply_fedsb_mix(model, mixes)
     else:
         targets = sorted(
             (
@@ -1306,7 +1317,51 @@ def _install_fedsb(
                 total += count * gradient
         bases, payload_bytes = baselines.install_fedsb(model, sums, rank, learning_rate)
         del sums
-        _atomic_torch_save({**expected, "bases": bases, "payload_bytes": payload_bytes}, cache_path)
+        mixes, gram_bytes = None, 0
+        if spec.method in FEDSB_NORMALIZED_METHODS:
+            # Gram round: each client returns A Sigma_i A^T (upper triangle) and tr(Sigma_i) per
+            # module; the server broadcasts the r x r mixes.  Both directions are charged.
+            modules = baselines.fedsb_modules(model)
+            group_keys = [name.rsplit(".", 1)[0] for name, _ in modules]
+            group_ids = {key: i for i, key in enumerate(dict.fromkeys(group_keys))}
+            groups = [group_ids[key] for key in group_keys]
+            grams = [[] for _ in modules]
+            traces = [[] for _ in modules]
+            client_weights = []
+            upper = torch.triu_indices(rank, rank)
+            for client_id, indices in enumerate(client_train):
+                seconds, _ = client_input_moments(
+                    model,
+                    [module for _, module in modules],
+                    groups,
+                    train_data,
+                    indices,
+                    examples,
+                    batch_size,
+                    spec.seed * 1_000_003 - 10_007 + client_id,
+                    _dtype(cfg["training"]["mixed_precision"]),
+                )
+                payload = []
+                for k, (_, module) in enumerate(modules):
+                    sigma = seconds[groups[k]].double().cpu()
+                    rows = module.fixed_right.double().cpu()
+                    gram = rows @ sigma @ rows.T
+                    grams[k].append(gram)
+                    traces[k].append(float(torch.trace(sigma).item()))
+                    payload.extend([gram[upper[0], upper[1]].float(), torch.tensor([traces[k][-1]])])
+                gram_bytes += encode_dense(torch.cat(payload)).nbytes
+                client_weights.append(float(indices.numel()))
+                del seconds
+            mixes = [
+                baselines.fedsb_gram_mix(module.fixed_right.double().cpu(), grams[k], traces[k], client_weights).cpu()
+                for k, (_, module) in enumerate(modules)
+            ]
+            gram_bytes += encode_dense(torch.cat([m.float().reshape(-1) for m in mixes])).nbytes * len(client_train)
+            baselines.apply_fedsb_mix(model, mixes)
+        _atomic_torch_save(
+            {**expected, "bases": bases, "payload_bytes": payload_bytes, "mixes": mixes, "gram_bytes": gram_bytes},
+            cache_path,
+        )
     adapter_names = [name for name, parameter in model.named_parameters() if parameter.requires_grad and "lora_R" in name]
     bundle.adapter_layout = TensorLayout.from_model(model, adapter_names)
     num_clients = len(client_train)
@@ -1318,11 +1373,13 @@ def _install_fedsb(
         learning_rate_in_init=learning_rate,
         gradient_examples_per_client=examples,
         basis_broadcast_bytes_per_client=payload_bytes,
-        setup_bytes=payload_bytes * num_clients,
+        setup_bytes=payload_bytes * num_clients + gram_bytes,
+        gram_round_bytes=gram_bytes,
+        normalized=spec.method in FEDSB_NORMALIZED_METHODS,
         gradient_upload_counted=False,
         assumption="only the basis broadcast is charged (lower bound on Fed-SB setup traffic)",
     )
-    return record, payload_bytes * num_clients
+    return record, payload_bytes * num_clients + gram_bytes
 
 
 def run_experiment(

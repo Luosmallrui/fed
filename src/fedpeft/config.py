@@ -41,6 +41,7 @@ SUPPORTED_METHODS = {
     "gev0x_a_ef",
     "gev0_a_dense",
     "eva_a_ef",
+    "evawh_a_ef",
     # Published federated LoRA baselines (fedpeft.baselines).
     "flora_dense",
     "fedex_dense",
@@ -49,9 +50,10 @@ SUPPORTED_METHODS = {
     "fedsvd_dense",
     "fedsvd_ef",
     "fedsb",
+    "fedsb_norm",
 }
 BASELINE_DENSE_ONLY_METHODS = {"flora_dense", "fedex_dense", "rolora_dense", "fedsvd_dense"}
-BASELINE_SPARSE_ONLY_METHODS = {"rolora_ef", "fedsvd_ef", "fedsb"}
+BASELINE_SPARSE_ONLY_METHODS = {"rolora_ef", "fedsvd_ef", "fedsb", "fedsb_norm"}
 ACTIVATION_BASIS_METHODS = {
     "gev_a_ef",
     "gev0_a_ef",
@@ -60,6 +62,7 @@ ACTIVATION_BASIS_METHODS = {
     "gev0x_a_ef",
     "gev0_a_dense",
     "eva_a_ef",
+    "evawh_a_ef",
 }
 CAB_METHODS = {"cab_a_dcef", "cab0_a_dcef", "cab_a_ef", "cab0_a_ef", *ACTIVATION_BASIS_METHODS}
 # provisional: smoke only; dcef_dev: median DCEF secant estimate; assumed: a

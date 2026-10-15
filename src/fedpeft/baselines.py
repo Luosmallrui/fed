@@ -18,6 +18,9 @@ fedsb         Fed-SB (Singhal et al., TMLR 2026).  Fixed B = U_r, A = V_r^T from
               r x r matrix R (initialised to S_r) and send it dense.  r is the largest rank whose
               payload fits the run's wire budget.  Only the basis broadcast is charged, not the
               client gradient upload, so its setup cost is a lower bound.
+fedsb_norm    Fed-SB with the input side curvature-normalized: A <- M A with
+              M = c (sum_i p_i A Sigma_i A^T)^{-1/2}, c^2 = tr(Sigma) / d, and R <- R M^{-1} so the
+              initial update is unchanged.  The r x r Gram matrices are an extra (charged) round.
 """
 
 from __future__ import annotations
@@ -37,7 +40,8 @@ FEDEX_METHODS = {"fedex_dense"}
 MERGE_METHODS = FLORA_METHODS | FEDEX_METHODS
 ROLORA_METHODS = {"rolora_dense", "rolora_ef"}
 FEDSVD_METHODS = {"fedsvd_dense", "fedsvd_ef"}
-FEDSB_METHODS = {"fedsb"}
+FEDSB_METHODS = {"fedsb", "fedsb_norm"}
+FEDSB_NORMALIZED_METHODS = {"fedsb_norm"}
 BASELINE_DENSE_METHODS = {"flora_dense", "fedex_dense", "rolora_dense", "fedsvd_dense"}
 BASELINE_EF_METHODS = {"rolora_ef", "fedsvd_ef"}
 BASELINE_METHODS = BASELINE_DENSE_METHODS | BASELINE_EF_METHODS | FEDSB_METHODS
@@ -50,6 +54,7 @@ BASELINE_CONSTRUCTION = {
     "fedsvd_dense": "ffa_lora",
     "fedsvd_ef": "ffa_lora",
     "fedsb": "fedsb",
+    "fedsb_norm": "fedsb",
 }
 FEDSB_CACHE_VERSION = 1
 
@@ -317,3 +322,31 @@ def load_fedsb_bases(model: nn.Module, bases: list[dict[str, torch.Tensor]]) -> 
 
 def summary_record(method: str, **values: Any) -> dict[str, Any]:
     return {"method": method, **values}
+
+
+def fedsb_modules(model: nn.Module) -> list[tuple[str, LoRAXSLinear]]:
+    return sorted(
+        ((name, module) for name, module in model.named_modules() if isinstance(module, LoRAXSLinear)),
+        key=lambda item: item[0],
+    )
+
+
+@torch.no_grad()
+def fedsb_gram_mix(rows: torch.Tensor, grams: list[torch.Tensor], traces: list[float], weights: list[float]) -> torch.Tensor:
+    """M = c (sum_i p_i A Sigma_i A^T)^{-1/2} with c^2 = sum_i p_i tr(Sigma_i) / d, from per-client Grams."""
+    total = float(sum(weights))
+    gram = sum((w / total) * g.double() for w, g in zip(weights, grams))
+    trace = sum((w / total) * t for w, t in zip(weights, traces))
+    gram = 0.5 * (gram + gram.T)
+    values, vectors = torch.linalg.eigh(gram)
+    inv_sqrt = (vectors * values.clamp_min(1e-300).rsqrt()[None, :]) @ vectors.T
+    return math.sqrt(trace / rows.shape[1]) * inv_sqrt
+
+
+@torch.no_grad()
+def apply_fedsb_mix(model: nn.Module, mixes: list[torch.Tensor]) -> None:
+    """right <- M right and R <- R M^{-1}: same initial update, curvature-normalized input side."""
+    for (_, module), mix in zip(fedsb_modules(model), mixes):
+        mix = mix.double().to(module.fixed_right.device)
+        module.fixed_right.copy_((mix @ module.fixed_right.double()).float())
+        module.lora_R.copy_((module.lora_R.double() @ torch.linalg.inv(mix)).float())

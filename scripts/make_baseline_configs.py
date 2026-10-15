@@ -19,11 +19,19 @@ gev0dev   Symmetric check: gev0 had inherited FFA-LoRA's rates, while every base
 gev0main  For every task whose pick differs from the confirmation rate, rerun gev0_a_dense and
           gev0_a_ef on the confirmation protocol (configs/roberta_gev0_retuned.yaml), whichever
           way the result goes.  Writes nothing when no rate changes.
+normfix   Does the curvature normalization fix other data-driven frozen bases?  EVA (eva_a_ef) and
+          EVA with its subspace normalized (evawh_a_ef) at the fixed-basis learning rates, and Fed-SB
+          with its input side normalized (fedsb_norm) at Fed-SB's swept rates; confirmation protocol,
+          code tree bishe_norm.  Also writes a smoke config.
 gev0repro The confirmation config relocated to this code tree, to check that a gev0 run
           reproduces confirm_main exactly here.
+normfixdev     Normalization shrinks Fed-SB's input scale, so fedsb_norm gets its own sweep
+               {3e-4 .. 3e-2} (train-holdout, seed 42, 10% budget), same rule as Fed-SB.
+normfixretune  Reads that sweep; for every task whose pick differs from Fed-SB's rate, reruns
+               fedsb_norm on the confirmation protocol (configs/roberta_normfix_retuned.yaml).
 
-Usage:  python scripts/make_baseline_configs.py dev | dev2 | gev0dev | gev0repro
-        python scripts/make_baseline_configs.py main | gev0main <dev results root>   (on the server)
+Usage:  python scripts/make_baseline_configs.py dev | dev2 | gev0dev | gev0repro | normfix | normfixdev
+        python scripts/make_baseline_configs.py main | gev0main | normfixretune <dev results root>   (on the server)
 """
 
 from __future__ import annotations
@@ -193,6 +201,107 @@ def gev0main(dev_root: Path) -> None:
     )
 
 
+NORM_SERVER = "/data/home/202412012250/bishe_norm"
+
+
+def normfix() -> None:
+    confirm = yaml.safe_load((ROOT / "configs" / "roberta_confirm_main.yaml").read_text())
+    fedsb_rates = json.loads((ROOT / "docs" / "results" / "baselines" / "LR_CHOICE.json").read_text())["chosen"]["fedsb"]
+    c = copy.deepcopy(confirm)
+    c["project"]["root"] = NORM_SERVER
+    c["project"]["output_dir"] = f"{NORM_SERVER}/docs/results/normfix_main"
+    c["project"]["spectral_cache"] = f"{NORM_SERVER}/artifacts/spectral/roberta-base-qv-r8-fp32.pt"
+    c["baselines"] = {"fedsb_gradient_examples": 1024, "fedsb_gradient_batch_size": 64}
+    fixed = copy.deepcopy(confirm["training"]["method_overrides"]["gev0_a_ef"])
+    rates = {task: float(tag) for task, tag in fedsb_rates.items()}
+    c["training"]["method_overrides"] = {
+        "eva_a_ef": copy.deepcopy(fixed),
+        "evawh_a_ef": copy.deepcopy(fixed),
+        "fedsb_norm": {"learning_rate": dict(rates), "head_learning_rate": dict(rates)},
+    }
+    c["matrix"]["dense_methods"] = []
+    c["matrix"]["sparse_methods"] = ["eva_a_ef", "evawh_a_ef", "fedsb_norm"]
+    c["project"]["expected_runs"] = len(TASKS) * 3 * 3 * 3
+    write("roberta_normfix_main", c, "Normalization as a general fix: EVA vs EVA-normalized (fixed-basis rates) and "
+          f"Fed-SB-normalized (Fed-SB's swept rates {json.dumps(fedsb_rates, sort_keys=True)}); confirmation protocol.")
+    smoke = copy.deepcopy(c)
+    smoke["project"]["phase"] = "smoke"
+    smoke["project"]["output_dir"] = f"{NORM_SERVER}/docs/results/normfix_smoke"
+    smoke["project"]["partition_dir"] = f"{NORM_SERVER}/artifacts/partitions-smoke"
+    smoke["project"].pop("expected_runs")
+    smoke["data"].update({"tasks": ["sst2"], "num_clients": 3, "clients_per_round": 3, "partition_seeds": [1001]})
+    smoke["training"]["rounds"] = {"sst2": 4}
+    smoke["training"]["local_steps"] = {"sst2": 4}
+    smoke["training"]["batch_size"] = {"sst2": 32}
+    smoke["training"]["eval_every"] = {"sst2": 1}
+    smoke["communication"]["wire_ratios"] = [0.1]
+    smoke["cab"]["gradient_examples"] = {"sst2": 256}
+    smoke["cab"]["gamma"] = {"sst2": 0.1}
+    smoke["baselines"] = {"fedsb_gradient_examples": 256, "fedsb_gradient_batch_size": 64}
+    smoke["matrix"]["sparse_methods"] = ["evawh_a_ef", "fedsb_norm"]
+    write("roberta_normfix_smoke", smoke, "Smoke test for evawh_a_ef and fedsb_norm.")
+
+
+# Normalization shrinks the input scale of Fed-SB's high-energy right basis to c, so the rate swept for
+# unnormalized Fed-SB is not its rate; sweep fedsb_norm by the same rule (it shares Fed-SB's grid top).
+FEDSB_NORM_GRID = ("3e-4", "1e-3", "3e-3", "1e-2", "3e-2")
+
+
+def normfixdev() -> None:
+    for tag in FEDSB_NORM_GRID:
+        c = yaml.safe_load((ROOT / "configs" / "roberta_normfix_main.yaml").read_text())
+        rate = float(tag)
+        c["project"]["phase"] = "tune"
+        c["project"]["output_dir"] = f"{NORM_SERVER}/docs/results/normfix_dev_lr_{tag}"
+        c["project"]["expected_runs"] = len(TASKS)
+        c["evaluation"] = {"policy": "train_holdout"}
+        c["data"]["partition_seeds"] = [42]
+        c["training"]["learning_rate"] = rate
+        c["training"]["head_learning_rate"] = rate
+        c["training"]["method_overrides"] = {"fedsb_norm": lr_overrides(rate)}
+        c["communication"]["wire_ratios"] = [0.1]
+        c["matrix"]["sparse_methods"] = ["fedsb_norm"]
+        write(f"roberta_normfix_dev_lr_{tag}", c,
+              f"Fed-SB-normalized learning-rate sweep, lr {tag} (train-holdout, seed 42, 10% budget), same rule as Fed-SB.")
+
+
+def normfixretune(dev_root: Path) -> None:
+    fedsb_rates = json.loads((ROOT / "docs" / "results" / "baselines" / "LR_CHOICE.json").read_text())["chosen"]["fedsb"]
+    scores: dict[str, dict[str, float]] = {}
+    for tag in FEDSB_NORM_GRID:
+        for task in TASKS:
+            value = last3(dev_root / f"normfix_dev_lr_{tag}" / f"{task}__fedsb_norm__seed-42__wire-10")
+            if value is None:
+                raise SystemExit(f"missing fedsb_norm dev run: lr {tag} {task}")
+            scores.setdefault(task, {})[tag] = value
+    chosen = {task: max(values, key=values.get) for task, values in scores.items()}
+    changed = [task for task in TASKS if float(chosen[task]) != float(fedsb_rates[task])]
+    boundary = [task for task in TASKS if chosen[task] in (FEDSB_NORM_GRID[0], FEDSB_NORM_GRID[-1])]
+    record = {"scores": scores, "chosen": chosen, "fedsb_rates": fedsb_rates, "changed_tasks": changed,
+              "boundary_tasks": boundary}
+    print(json.dumps(record, indent=1))
+    (ROOT / "logs").mkdir(exist_ok=True)
+    (ROOT / "logs" / "fedsb_norm_lr_choice.json").write_text(json.dumps(record, indent=1))
+    if not changed:
+        print("UNCHANGED")
+        return
+    c = yaml.safe_load((ROOT / "configs" / "roberta_normfix_main.yaml").read_text())
+    c["project"]["output_dir"] = f"{NORM_SERVER}/docs/results/normfix_retuned"
+    c["data"]["tasks"] = changed
+    for key in ("rounds", "local_steps", "batch_size", "eval_every"):
+        c["training"][key] = {t: v for t, v in c["training"][key].items() if t in changed}
+    for key in ("gamma", "gradient_examples"):
+        if key in c.get("cab", {}) and isinstance(c["cab"][key], dict):
+            c["cab"][key] = {t: v for t, v in c["cab"][key].items() if t in changed}
+    rates = {task: float(chosen[task]) for task in changed}
+    c["training"]["method_overrides"] = {"fedsb_norm": {"learning_rate": dict(rates), "head_learning_rate": dict(rates)}}
+    c["matrix"]["sparse_methods"] = ["fedsb_norm"]
+    c["project"]["expected_runs"] = len(changed) * 3 * 3
+    write("roberta_normfix_retuned", c,
+          f"Fed-SB-normalized on the confirmation protocol at its own swept rates {json.dumps(rates)} "
+          f"(Fed-SB's rates were {json.dumps(fedsb_rates, sort_keys=True)}).")
+
+
 def last3(path: Path) -> float | None:
     summary = path / "summary.json"
     if not summary.exists():
@@ -250,6 +359,12 @@ if __name__ == "__main__":
         dev2()
     elif sys.argv[1:2] == ["gev0dev"]:
         gev0dev()
+    elif sys.argv[1:2] == ["normfix"]:
+        normfix()
+    elif sys.argv[1:2] == ["normfixdev"]:
+        normfixdev()
+    elif sys.argv[1:2] == ["normfixretune"] and len(sys.argv) == 3:
+        normfixretune(Path(sys.argv[2]))
     elif sys.argv[1:2] == ["gev0repro"]:
         gev0repro()
     elif sys.argv[1:2] == ["gev0main"] and len(sys.argv) == 3:

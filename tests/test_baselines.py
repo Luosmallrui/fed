@@ -210,5 +210,47 @@ class BaselineMechanicsTests(unittest.TestCase):
             self.assertEqual(sum(p.numel() for p in trainable), count * 9)
 
 
+    def test_fedsb_normalization_keeps_the_update_and_equalizes_curvature(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = tiny_bundle(Path(tmp), "fedsb")
+            model = bundle.model
+            modules = baselines.fedsb_modules(model)
+            generator = torch.Generator().manual_seed(5)
+            gradients = [torch.randn(m.base.out_features, m.base.in_features, generator=generator) for _, m in modules]
+            baselines.install_fedsb(model, gradients, 3, 1e-3)
+            modules = baselines.fedsb_modules(model)
+
+            def update(module):
+                return module.fixed_left.double() @ module.lora_R.double() @ torch.diag(module.fixed_singular.double()) @ module.fixed_right.double()
+
+            before = [update(m) for _, m in modules]
+            sigmas, mixes = [], []
+            for _, module in modules:
+                d = module.base.in_features
+                x = torch.randn(4 * d, d, generator=generator, dtype=torch.float64) + 3.0  # anisotropic: shared mean
+                sigmas.append(x.T @ x / x.shape[0])
+            for k, (_, module) in enumerate(modules):
+                rows = module.fixed_right.double()
+                grams = [rows @ sigmas[k] @ rows.T, rows @ (2 * sigmas[k]) @ rows.T]
+                traces = [float(torch.trace(sigmas[k])), float(torch.trace(2 * sigmas[k]))]
+                mixes.append(baselines.fedsb_gram_mix(rows, grams, traces, [1.0, 3.0]))
+            baselines.apply_fedsb_mix(model, mixes)
+            for k, (_, module) in enumerate(modules):
+                self.assertTrue(torch.allclose(update(module), before[k], atol=1e-6))
+                pooled = 0.25 * sigmas[k] + 0.75 * 2 * sigmas[k]
+                rows = module.fixed_right.double()
+                c2 = float(torch.trace(pooled)) / rows.shape[1]
+                deviation = (rows @ pooled @ rows.T - c2 * torch.eye(3, dtype=torch.float64)).abs().max() / c2
+                self.assertLess(float(deviation), 1e-5)  # float32 storage of the basis
+
+    def test_eva_normalized_is_a_whitened_gradient_free_basis(self):
+        from fedpeft.cab import GRADIENT_FREE_METHODS, WHITENED_METHODS
+        self.assertIn("evawh_a_ef", WHITENED_METHODS)
+        self.assertIn("evawh_a_ef", GRADIENT_FREE_METHODS)
+        self.assertEqual(_adapter_construction_method("evawh_a_ef"), "random_a_ef")
+        self.assertEqual(_adapter_construction_method("fedsb_norm"), "fedsb")
+        self.assertIn("fedsb_norm", baselines.FEDSB_NORMALIZED_METHODS)
+
+
 if __name__ == "__main__":
     unittest.main()
