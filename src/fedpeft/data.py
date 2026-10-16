@@ -23,6 +23,9 @@ TASK_FIELDS = {
     "mrpc": ("sentence1", "sentence2"),
     "qqp": ("question1", "question2"),
     "qnli": ("question", "sentence"),
+    # Web-service tasks built by scripts/prepare_web_tasks.py
+    "banking77": ("text", None),
+    "moderation": ("text", None),
 }
 
 # Decoder-only tokenizers have no separator/classification tokens: pairs are joined
@@ -35,6 +38,8 @@ DECODER_TEMPLATES = {
     "mrpc": "Sentence 1: {0}\nSentence 2: {1}\nParaphrase:",
     "qqp": "Question 1: {0}\nQuestion 2: {1}\nDuplicate:",
     "qnli": "Question: {0}\nSentence: {1}\nAnswer:",
+    "banking77": "Customer query: {0}\nIntent:",
+    "moderation": "Comment: {0}\nToxic:",
 }
 
 
@@ -43,7 +48,7 @@ def is_decoder_tokenizer(tokenizer: Any) -> bool:
     return getattr(tokenizer, "cls_token", None) is None and getattr(tokenizer, "sep_token", None) is None
 
 
-TASK_NUM_LABELS = {"sst2": 2, "rte": 2, "mnli": 3, "mrpc": 2, "qqp": 2, "qnli": 2}
+TASK_NUM_LABELS = {"sst2": 2, "rte": 2, "mnli": 3, "mrpc": 2, "qqp": 2, "qnli": 2, "banking77": 77, "moderation": 2}
 TASK_VALIDATION_SPLITS = {
     "sst2": ["validation"],
     "rte": ["validation"],
@@ -51,6 +56,9 @@ TASK_VALIDATION_SPLITS = {
     "mrpc": ["validation"],
     "qqp": ["validation"],
     "qnli": ["validation"],
+    "banking77": ["validation"],
+    # one held-out set per platform, so the metric can weight platforms equally
+    "moderation": ["validation_civil", "validation_twitter"],
 }
 TASK_CANONICAL_ROWS = {
     "sst2": {"train": 67349, "validation": 872, "test": 1821},
@@ -188,7 +196,8 @@ def prepare_tokenized_dataset(
         encoded["labels"] = batch["label"]
         return encoded
 
-    keep = {"input_ids", "attention_mask", "token_type_ids", "labels"}
+    # "group" (the platform of a Web-service task) is kept for the client partition.
+    keep = {"input_ids", "attention_mask", "token_type_ids", "labels", "group"}
     tokenized = raw.map(
         tokenize,
         batched=True,
@@ -230,6 +239,36 @@ def dataset_to_tensors(dataset: Dataset) -> dict[str, torch.Tensor]:
     return result
 
 
+def _dirichlet_allocation(
+    labels: np.ndarray,
+    positions: np.ndarray,
+    num_clients: int,
+    alpha: float,
+    min_client_examples: int,
+    rng: np.random.Generator,
+    max_attempts: int,
+) -> list[list[int]]:
+    """Per-class Dirichlet split of ``positions`` (indices into the train set) over clients."""
+    classes = np.unique(labels[positions])
+    for _ in range(max_attempts):
+        candidate: list[list[int]] = [[] for _ in range(num_clients)]
+        for label in classes:
+            class_indices = positions[labels[positions] == label]
+            rng.shuffle(class_indices)
+            proportions = rng.dirichlet(np.full(num_clients, alpha, dtype=np.float64))
+            counts = rng.multinomial(len(class_indices), proportions)
+            cursor = 0
+            for client_id, count in enumerate(counts):
+                candidate[client_id].extend(class_indices[cursor : cursor + count].tolist())
+                cursor += count
+        if min(len(items) for items in candidate) >= min_client_examples:
+            return candidate
+    raise RuntimeError(
+        f"failed to produce {num_clients} clients with at least "
+        f"{min_client_examples} examples after {max_attempts} attempts"
+    )
+
+
 def create_dirichlet_partition(
     labels: np.ndarray,
     num_clients: int,
@@ -238,31 +277,30 @@ def create_dirichlet_partition(
     min_client_examples: int,
     seed: int,
     max_attempts: int = 1000,
+    groups: np.ndarray | None = None,
 ) -> ClientPartition:
+    """Dirichlet label skew over clients.  With ``groups`` (e.g. the platform of each example),
+    the clients are divided evenly among the groups and each group is split on its own, so a
+    client only holds data of its own platform."""
     labels = np.asarray(labels, dtype=np.int64)
-    classes = np.unique(labels)
     rng = np.random.default_rng(seed)
-    allocations: list[list[int]] | None = None
-    for _ in range(max_attempts):
-        candidate: list[list[int]] = [[] for _ in range(num_clients)]
-        for label in classes:
-            class_indices = np.flatnonzero(labels == label)
-            rng.shuffle(class_indices)
-            proportions = rng.dirichlet(np.full(num_clients, alpha, dtype=np.float64))
-            counts = rng.multinomial(len(class_indices), proportions)
-            cursor = 0
-            for client_id, count in enumerate(counts):
-                candidate[client_id].extend(class_indices[cursor : cursor + count].tolist())
-                cursor += count
-        sizes = [len(items) for items in candidate]
-        if min(sizes) >= min_client_examples:
-            allocations = candidate
-            break
-    if allocations is None:
-        raise RuntimeError(
-            f"failed to produce {num_clients} clients with at least "
-            f"{min_client_examples} examples after {max_attempts} attempts"
+    if groups is None:
+        allocations = _dirichlet_allocation(
+            labels, np.arange(len(labels)), num_clients, alpha, min_client_examples, rng, max_attempts
         )
+    else:
+        groups = np.asarray(groups, dtype=np.int64)
+        names = np.unique(groups)
+        if num_clients % len(names):
+            raise ValueError(f"{num_clients} clients cannot be divided evenly among {len(names)} groups")
+        allocations = []
+        for name in names:
+            allocations.extend(
+                _dirichlet_allocation(
+                    labels, np.flatnonzero(groups == name), num_clients // len(names), alpha,
+                    min_client_examples, rng, max_attempts,
+                )
+            )
 
     train: list[np.ndarray] = []
     holdout: list[np.ndarray] = []
@@ -285,6 +323,7 @@ def load_or_create_partition(
     holdout_fraction: float,
     min_client_examples: int,
     seed: int,
+    groups: np.ndarray | None = None,
 ) -> ClientPartition:
     output_path = Path(output_path)
     expected_metadata = {
@@ -295,6 +334,8 @@ def load_or_create_partition(
         "min_client_examples": int(min_client_examples),
         "labels_hash": sha256_arrays([np.asarray(labels, dtype=np.int64)]),
     }
+    if groups is not None:
+        expected_metadata["groups_hash"] = sha256_arrays([np.asarray(groups, dtype=np.int64)])
     if output_path.exists():
         payload = np.load(output_path, allow_pickle=False)
         for key, expected in expected_metadata.items():
@@ -317,6 +358,7 @@ def load_or_create_partition(
         holdout_fraction=holdout_fraction,
         min_client_examples=min_client_examples,
         seed=seed,
+        groups=groups,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     values: dict[str, Any] = {

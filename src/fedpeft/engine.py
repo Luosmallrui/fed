@@ -549,6 +549,18 @@ def _combined_dense_roundtrip(adapter: torch.Tensor, head: torch.Tensor):
     return adapter_decoded, head_decoded, adapter_packet.nbytes + head_packet.nbytes
 
 
+def _wire_caps(cfg: dict[str, Any], reference_adapter_bytes: int, head_bytes: int, ratio: float) -> tuple[int, int]:
+    """(message cap, adapter cap) for a wire ratio.  By default the ratio applies to a whole
+    uncompressed full-LoRA message, dense head included, and the head is subtracted from it.
+    communication.budget_scope = "adapter" applies the ratio to the adapter alone and sends the
+    dense head on top, for tasks whose head (77 classes for banking77) exceeds a small budget."""
+    if cfg["communication"].get("budget_scope", "message") == "adapter":
+        adapter_cap = math.floor(reference_adapter_bytes * ratio)
+        return adapter_cap + head_bytes, adapter_cap
+    message_cap = math.floor((reference_adapter_bytes + head_bytes) * ratio)
+    return message_cap, message_cap - head_bytes
+
+
 def _build_adapter_compressor(
     method: str,
     adapter_layout: TensorLayout,
@@ -1264,8 +1276,8 @@ def _install_fedsb(
     if spec.wire_ratio is None:
         raise ValueError("Fed-SB takes its rank from the wire budget")
     head_bytes = encode_dense(bundle.head_layout.flatten(model)).nbytes
-    reference_bytes = 13 + 2 * full_lora_reference_numel(model, int(cfg["model"]["rank"])) + head_bytes
-    adapter_cap = math.floor(reference_bytes * spec.wire_ratio) - head_bytes
+    reference_adapter_bytes = 13 + 2 * full_lora_reference_numel(model, int(cfg["model"]["rank"]))
+    _, adapter_cap = _wire_caps(cfg, reference_adapter_bytes, head_bytes, spec.wire_ratio)
     rank = baselines.fedsb_rank(model, adapter_cap)
     learning_rate = float(method_task_value(cfg, "learning_rate", spec.task, spec.method))
     section = cfg.get("baselines", {})
@@ -1467,6 +1479,11 @@ def run_experiment(
         data_prepare_seconds = time.perf_counter() - prep_started
 
         labels = np.asarray(tokenized["train"]["labels"], dtype=np.int64)
+        groups = (
+            np.asarray(tokenized["train"]["group"], dtype=np.int64)
+            if "group" in tokenized["train"].column_names
+            else None
+        )
         partition_path = Path(cfg["project"]["partition_dir"]) / (
             f"{spec.task}__clients-{cfg['data']['num_clients']}__alpha-{cfg['data']['dirichlet_alpha']}"
             f"__holdout-{cfg['data']['local_holdout_fraction']}"
@@ -1481,6 +1498,7 @@ def run_experiment(
             float(cfg["data"]["local_holdout_fraction"]),
             int(cfg["data"]["min_client_examples"]),
             spec.seed,
+            groups=groups,
         )
         client_train = [torch.from_numpy(x).to(device=device, dtype=torch.long) for x in partition.train]
         client_holdout = [torch.from_numpy(x).to(device=device, dtype=torch.long) for x in partition.holdout]
@@ -1564,14 +1582,10 @@ def run_experiment(
                     raise ValueError("CAB methods require a wire ratio")
                 # Same budget arithmetic as the compressor built below; checked there.
                 cab_head_bytes = encode_dense(head_layout.flatten(model)).nbytes
-                cab_reference_bytes = (
-                    13
-                    + 2 * full_lora_reference_numel(model, int(cfg["model"]["rank"]))
-                    + cab_head_bytes
-                )
+                cab_reference_adapter_bytes = 13 + 2 * full_lora_reference_numel(model, int(cfg["model"]["rank"]))
                 cab_sparse_k = sparse_k_for_cap(
                     adapter_layout.total_numel,
-                    math.floor(cab_reference_bytes * spec.wire_ratio) - cab_head_bytes,
+                    _wire_caps(cfg, cab_reference_adapter_bytes, cab_head_bytes, spec.wire_ratio)[1],
                 )
             cab_record, cab_setup_bytes = _install_cab_basis(
                 cfg=cfg,
@@ -1674,8 +1688,7 @@ def run_experiment(
         num_clients = int(cfg["data"]["num_clients"])
         adapter_compressor: TopKCompressor | None = None
         if spec.wire_ratio is not None:
-            message_cap = math.floor(reference_message_bytes * spec.wire_ratio)
-            adapter_cap = message_cap - reference_head_bytes
+            message_cap, adapter_cap = _wire_caps(cfg, reference_adapter_bytes, reference_head_bytes, spec.wire_ratio)
             if spec.method not in FEDSB_METHODS:
                 # Fed-SB's dense payload was sized to fit the cap; every packet is still checked.
                 adapter_compressor = _build_adapter_compressor(

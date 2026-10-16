@@ -1,0 +1,54 @@
+{
+  "seed": 20261015,
+  "civil_train": 40000,
+  "civil_test": 10000,
+  "toxic_threshold": 0.5,
+  "raw_files": {
+    "banking77/test.csv": "d12d6e3bc4c3103966ae786dc435913c0c563dfa328f5a3646d0e62cfeeb474d",
+    "banking77/train.csv": "b06e26ac675513959a63135f11b94ea7786ed02da65db93a5650d8838cbc664b",
+    "civil_comments/test-00000-of-00001.parquet": "410f803ff161e7c4ba005db7de5b444cac413f4861bf056b0fd69d670d75aa08",
+    "civil_comments/train-00000-of-00002.parquet": "c20f01c3aecbdd942886cacb0ee67e995df33bc712a622fde75927ed3d6ccefe",
+    "civil_comments/train-00001-of-00002.parquet": "a76af69d7b24758bc38b196bc422d4767935c1dd7d3c1465554649c546d99ccb",
+    "tweet_eval_offensive/test-00000-of-00001.parquet": "15b87adaf1850d8e3e104be6240255813d48d776940be546ad353fee9fcfb099",
+    "tweet_eval_offensive/train-00000-of-00001.parquet": "4c2cb443cb5b956aa8578a6e18b2f9e50ce43217774e3cf171d53e16a1db81a3",
+    "tweet_eval_offensive/validation-00000-of-00001.parquet": "1161b4e6cc7cbdaa667d4fc131f9be0ea3db755616126329dda7eb521cd88c36"
+  },
+  "banking77": {
+    "rows": {
+      "train": 10003,
+      "validation": 3080
+    },
+    "classes": 77
+  },
+  "moderation": {
+    "train": {
+      "rows": 53240,
+      "rows_by_platform": {
+        "0": 40000,
+        "1": 13240
+      },
+      "toxic_rate_by_platform": {
+        "0": 0.078825,
+        "1": 0.3323262839879154
+      }
+    },
+    "validation_civil": {
+      "rows": 10000,
+      "rows_by_platform": {
+        "0": 10000
+      },
+      "toxic_rate_by_platform": {
+        "0": 0.0784
+      }
+    },
+    "validation_twitter": {
+      "rows": 860,
+      "rows_by_platform": {
+        "1": 860
+      },
+      "toxic_rate_by_platform": {
+        "1": 0.27906976744186046
+      }
+    }
+  }
+}

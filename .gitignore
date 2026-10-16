@@ -29,6 +29,7 @@ docs/results/*
 !docs/results/baselines/
 !docs/results/conditioning/
 !docs/results/normfix/
+!docs/results/web/
 !docs/results/exploration/
 docs/results/exploration/*
 !docs/results/exploration/cab_anisotropy_mnli.json
@@ -56,3 +57,4 @@ docs/proposals/*.tex
 /*.jpeg
 /*.jpg
 /*.png
+/*.pdf

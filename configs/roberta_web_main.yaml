@@ -1,0 +1,155 @@
+# Web-service tasks, confirmation protocol (official held-out sets, seeds 1001-1003, 5%/10%), each method at its swept rate: {"fedavg_lora": {"banking77": "3e-3", "moderation": "1e-3"}, "fedsb": {"banking77": "3e-3", "moderation": "1e-3"}, "fedsvd_dense": {"banking77": "1e-2", "moderation": "3e-3"}, "gev0_a_dense": {"banking77": "3e-3", "moderation": "1e-3"}, "random_a_dense": {"banking77": "3e-3", "moderation": "1e-3"}, "rolora_dense": {"banking77": "3e-3", "moderation": "1e-3"}}
+project:
+  phase: final
+  root: /data/home/202412012250/bishe_web
+  output_dir: /data/home/202412012250/bishe_web/docs/results/web_main
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 90
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - attention.self.query
+  - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - banking77
+  - moderation
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 10
+  clients_per_round: 10
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 1001
+  - 1002
+  - 1003
+training:
+  rounds:
+    banking77: 30
+    moderation: 30
+  local_steps:
+    banking77: 8
+    moderation: 16
+  batch_size:
+    banking77: 64
+    moderation: 128
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora:
+      learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+      head_learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+    full_lora_ef:
+      learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+      head_learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+    random_a_ef:
+      learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+      head_learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+    cab0_a_ef:
+      learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+      head_learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+    gev0_a_ef:
+      learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+      head_learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+    rolora_ef:
+      learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+      head_learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+    fedsvd_ef:
+      learning_rate:
+        banking77: 0.01
+        moderation: 0.003
+      head_learning_rate:
+        banking77: 0.01
+        moderation: 0.003
+    fedsb:
+      learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+      head_learning_rate:
+        banking77: 0.003
+        moderation: 0.001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    banking77: 2
+    moderation: 3
+  checkpoint_every: 1
+evaluation:
+  policy: official_validation
+communication:
+  wire_ratios:
+  - 0.05
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+  budget_scope: adapter
+cab:
+  gamma:
+    banking77: 0.1
+    moderation: 0.1
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  client_rank: 4
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  activation_rank: 8
+  activation_ridge: 0.001
+  factor_dtype: float16
+  basis_dtype: float16
+matrix:
+  dense_methods:
+  - fedavg_lora
+  sparse_methods:
+  - gev0_a_ef
+  - random_a_ef
+  - cab0_a_ef
+  - full_lora_ef
+  - rolora_ef
+  - fedsvd_ef
+  - fedsb
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []
+baselines:
+  fedsb_gradient_examples: 1024
+  fedsb_gradient_batch_size: 64

@@ -10,6 +10,8 @@ def primary_metric_name(task: str) -> str:
         return "mean_matched_mismatched_accuracy"
     if task in {"mrpc", "qqp"}:
         return "glue_accuracy_f1_mean"
+    if task == "moderation":
+        return "mean_platform_macro_f1"
     return "accuracy"
 
 
@@ -45,12 +47,17 @@ def primary_metric(task: str, split_metrics: dict[str, dict[str, float]]) -> flo
         values = split_metrics["train_holdout"]
         if task in {"mrpc", "qqp"}:
             return 0.5 * (values["accuracy"] + values["f1"])
+        if task == "moderation":
+            return values["macro_f1"]
         return values["accuracy"]
     if task == "mnli":
         return 0.5 * (
             split_metrics["validation_matched"]["accuracy"]
             + split_metrics["validation_mismatched"]["accuracy"]
         )
+    if task == "moderation":
+        # toxic content is the minority class; each platform counts equally
+        return 0.5 * (split_metrics["validation_civil"]["macro_f1"] + split_metrics["validation_twitter"]["macro_f1"])
     values = split_metrics["validation"]
     if task in {"mrpc", "qqp"}:
         return 0.5 * (values["accuracy"] + values["f1"])

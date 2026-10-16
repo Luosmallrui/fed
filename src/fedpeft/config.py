@@ -68,7 +68,7 @@ CAB_METHODS = {"cab_a_dcef", "cab0_a_dcef", "cab_a_ef", "cab0_a_ef", *ACTIVATION
 # provisional: smoke only; dcef_dev: median DCEF secant estimate; assumed: a
 # declared prior (the DCEF secant estimate proved contaminated by client drift).
 CAB_GAMMA_SOURCES = {"provisional", "dcef_dev", "assumed"}
-SUPPORTED_TASKS = {"sst2", "rte", "mnli", "mrpc", "qqp", "qnli"}
+SUPPORTED_TASKS = {"sst2", "rte", "mnli", "mrpc", "qqp", "qnli", "banking77", "moderation"}
 
 STABILITY_PROTOCOL_SHA256 = (
     "e96302aca47dc5e5afba431ce1e02fb3d653fa6196d1ad09acf3594e980a5116"
@@ -394,6 +394,8 @@ def validate_config(cfg: dict[str, Any]) -> None:
         raise ValueError("the implemented sparse codec requires index_dtype: uint32")
     if communication.get("count_downlink_per_client") is not True:
         raise ValueError("count_downlink_per_client must be true for delivered-wire reporting")
+    if communication.get("budget_scope", "message") not in {"message", "adapter"}:
+        raise ValueError("communication.budget_scope must be 'message' or 'adapter'")
 
 
 def _validate_cab_config(cfg: dict[str, Any]) -> None:
