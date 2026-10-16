@@ -52,3 +52,16 @@ Uncompressed FedIT: 73.5
 | Fed-SB | banking77 | 6 | +8.5 | 6 / 0 / 0 | 0.031 |
 | Fed-SB | moderation | 6 | +9.5 | 6 / 0 / 0 | 0.031 |
 | Fed-SB | all | 12 | +9.0 | 12 / 0 / 0 | 0.00049 |
+
+## moderation by platform (macro-F1 x100: news comments / tweets, and the lowest platform average over seeds)
+
+| Method | 5% | 10% |
+|---|---|---|
+| FFA-LoRA | 68.3 / 64.4 (worst 57.0) | 70.9 / 66.2 (worst 59.8) |
+| Grad-energy | 53.9 / 49.4 (worst 44.9) | 53.8 / 48.7 (worst 44.9) |
+| FedIT | 67.2 / 63.0 (worst 52.3) | 70.5 / 67.1 (worst 58.7) |
+| RoLoRA | 69.2 / 66.1 (worst 59.8) | 73.4 / 69.6 (worst 66.1) |
+| FedSVD | 67.6 / 62.5 (worst 48.9) | 71.3 / 66.5 (worst 56.5) |
+| Fed-SB | 57.4 / 56.4 (worst 44.9) | 65.1 / 61.4 (worst 45.1) |
+| FoCuS | 70.4 / 67.0 (worst 60.9) | 72.7 / 68.2 (worst 64.6) |
+| FedIT, uncompressed | 75.6 / 71.4 (worst 68.1) |
