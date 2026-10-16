@@ -113,10 +113,29 @@ def main() -> None:
                                          "ties": len(deltas) - wins - losses, "losses": losses, "p": p}
             lines.append(f"| {name} | {task} | {len(deltas)} | {100 * statistics.fmean(deltas):+.1f} | "
                          f"{wins} / {len(deltas) - wins - losses} / {losses} | {p:.2g} |")
+    platform_rows = {}
+    if any(key[0] == "moderation" for key in runs):
+        lines += ["", "## moderation by platform (macro-F1 x100: news comments / tweets, and the lowest platform average over seeds)", "",
+                  "| Method | " + " | ".join(f"{int(w * 100)}%" for w in WIRES) + " |", "|---|" + "---|" * len(WIRES)]
+        for method, name in (*NAMES.items(), ("fedavg_lora", "FedIT, uncompressed")):
+            cells = []
+            for wire in ((None,) if method == "fedavg_lora" else WIRES):
+                keys = [("moderation", method, s, wire) for s in seeds if ("moderation", method, s, wire) in runs]
+                if not keys:
+                    cells.append("")
+                    continue
+                splits = [runs[k]["final"]["splits"] for k in keys]
+                civil = [100 * x["validation_civil"]["macro_f1"] for x in splits]
+                tweets = [100 * x["validation_twitter"]["macro_f1"] for x in splits]
+                worst = min((c + t) / 2 for c, t in zip(civil, tweets))
+                platform_rows.setdefault(method, {})[str(wire)] = {
+                    "civil": statistics.fmean(civil), "tweets": statistics.fmean(tweets), "worst": worst}
+                cells.append(f"{statistics.fmean(civil):.1f} / {statistics.fmean(tweets):.1f} (worst {worst:.1f})")
+            lines.append(f"| {name} | " + " | ".join(cells) + " |")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "WEB_SUMMARY.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    (out / "web_summary.json").write_text(json.dumps({"table": table, "pairs": pairs}, indent=1), encoding="utf-8")
+    (out / "web_summary.json").write_text(json.dumps({"table": table, "pairs": pairs, "moderation_by_platform": platform_rows}, indent=1), encoding="utf-8")
     print("\n".join(lines))
 
 
