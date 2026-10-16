@@ -1,0 +1,132 @@
+# Banking77 with 50 clients (full participation), 10% budget, confirmation protocol; learning rates from the ten-client sweep.
+project:
+  phase: final
+  root: /data/home/202412012250/bishe_web
+  output_dir: /data/home/202412012250/bishe_web/docs/results/web_scale_main
+  tokenized_dir: /data/home/202412012250/bishe_dcef/artifacts/tokenized
+  partition_dir: /data/home/202412012250/bishe_dcef/artifacts/partitions
+  spectral_cache: /data/home/202412012250/bishe_dcef/artifacts/spectral/roberta-base-qv-r8-fp32.pt
+  expected_runs: 24
+model:
+  path: /data/home/202412012250/bishe_dcef/models/roberta-base
+  rank: 8
+  alpha: 16.0
+  dropout: 0.0
+  target_suffixes:
+  - attention.self.query
+  - attention.self.value
+  torch_dtype: float32
+  basis_seed: 20260910
+  lora_xs_init_std: 1.0e-05
+data:
+  root: /data/home/202412012250/bishe_dcef/datasets
+  tasks:
+  - banking77
+  max_length: 128
+  preprocessing_workers: 8
+  gpu_resident: true
+  num_clients: 50
+  clients_per_round: 50
+  dirichlet_alpha: 0.3
+  local_holdout_fraction: 0.1
+  min_client_examples: 24
+  partition_seeds:
+  - 1001
+  - 1002
+  - 1003
+training:
+  rounds:
+    banking77: 30
+  local_steps:
+    banking77: 8
+  batch_size:
+    banking77: 64
+  eval_batch_size: 512
+  learning_rate: 0.0003
+  head_learning_rate: 0.0003
+  method_overrides:
+    fedavg_lora:
+      learning_rate:
+        banking77: 0.003
+      head_learning_rate:
+        banking77: 0.003
+    full_lora_ef:
+      learning_rate:
+        banking77: 0.003
+      head_learning_rate:
+        banking77: 0.003
+    random_a_ef:
+      learning_rate:
+        banking77: 0.003
+      head_learning_rate:
+        banking77: 0.003
+    cab0_a_ef:
+      learning_rate:
+        banking77: 0.003
+      head_learning_rate:
+        banking77: 0.003
+    gev0_a_ef:
+      learning_rate:
+        banking77: 0.003
+      head_learning_rate:
+        banking77: 0.003
+    rolora_ef:
+      learning_rate:
+        banking77: 0.003
+      head_learning_rate:
+        banking77: 0.003
+    fedsvd_ef:
+      learning_rate:
+        banking77: 0.01
+      head_learning_rate:
+        banking77: 0.01
+    fedsb:
+      learning_rate:
+        banking77: 0.003
+      head_learning_rate:
+        banking77: 0.003
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: bfloat16
+  eval_every:
+    banking77: 2
+  checkpoint_every: 1
+evaluation:
+  policy: official_validation
+communication:
+  wire_ratios:
+  - 0.1
+  value_dtype: float16
+  index_dtype: uint32
+  count_downlink_per_client: true
+  schema_once_per_run: true
+  budget_scope: adapter
+cab:
+  gamma:
+    banking77: 0.1
+  gamma_source: assumed
+  kappa_multiplier: 1.0
+  kappa_override: null
+  client_rank: 4
+  gradient_examples: 1024
+  gradient_batch_size: 64
+  activation_rank: 8
+  activation_ridge: 0.001
+  factor_dtype: float16
+  basis_dtype: float16
+matrix:
+  dense_methods:
+  - fedavg_lora
+  sparse_methods:
+  - gev0_a_ef
+  - random_a_ef
+  - cab0_a_ef
+  - full_lora_ef
+  - rolora_ef
+  - fedsvd_ef
+  - fedsb
+  diagnostic_dense_methods: []
+  diagnostic_sparse_methods: []
+baselines:
+  fedsb_gradient_examples: 1024
+  fedsb_gradient_batch_size: 64

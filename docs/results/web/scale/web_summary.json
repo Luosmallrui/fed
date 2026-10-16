@@ -1,0 +1,167 @@
+{
+ "table": {
+  "banking77": {
+   "random_a_ef": {
+    "0.1": {
+     "mean": 87.02380952380952,
+     "sd": 0.23034411962979107,
+     "seeds": 3,
+     "c95_hits": 3,
+     "c95_median_mb": 532.367337
+    }
+   },
+   "cab0_a_ef": {
+    "0.1": {
+     "mean": 58.77705627705628,
+     "sd": 1.6937142995229142,
+     "seeds": 3,
+     "c95_hits": 0,
+     "c95_median_mb": null
+    }
+   },
+   "full_lora_ef": {
+    "0.1": {
+     "mean": 87.39177489177489,
+     "sd": 0.44080978039862034,
+     "seeds": 3,
+     "c95_hits": 3,
+     "c95_median_mb": 461.495437
+    }
+   },
+   "rolora_ef": {
+    "0.1": {
+     "mean": 84.26406926406925,
+     "sd": 1.0040467397051072,
+     "seeds": 3,
+     "c95_hits": 0,
+     "c95_median_mb": null
+    }
+   },
+   "fedsvd_ef": {
+    "0.1": {
+     "mean": 89.62121212121212,
+     "sd": 0.24368680193068723,
+     "seeds": 3,
+     "c95_hits": 3,
+     "c95_median_mb": 319.460937
+    }
+   },
+   "fedsb": {
+    "0.1": {
+     "mean": 81.94805194805195,
+     "sd": 0.5707271373781457,
+     "seeds": 3,
+     "c95_hits": 0,
+     "c95_median_mb": null
+    }
+   },
+   "gev0_a_ef": {
+    "0.1": {
+     "mean": 88.98268398268398,
+     "sd": 0.3268326595355318,
+     "seeds": 3,
+     "c95_hits": 3,
+     "c95_median_mb": 463.701887
+    }
+   }
+  }
+ },
+ "pairs": {
+  "random_a_ef/banking77": {
+   "n": 3,
+   "mean": 1.9588744588744638,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "random_a_ef/all": {
+   "n": 3,
+   "mean": 1.9588744588744638,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "cab0_a_ef/banking77": {
+   "n": 3,
+   "mean": 30.20562770562771,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "cab0_a_ef/all": {
+   "n": 3,
+   "mean": 30.20562770562771,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "full_lora_ef/banking77": {
+   "n": 3,
+   "mean": 1.5909090909090946,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "full_lora_ef/all": {
+   "n": 3,
+   "mean": 1.5909090909090946,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "rolora_ef/banking77": {
+   "n": 3,
+   "mean": 4.718614718614722,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "rolora_ef/all": {
+   "n": 3,
+   "mean": 4.718614718614722,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "fedsvd_ef/banking77": {
+   "n": 3,
+   "mean": -0.6385281385281345,
+   "wins": 0,
+   "ties": 1,
+   "losses": 2,
+   "p": 0.5
+  },
+  "fedsvd_ef/all": {
+   "n": 3,
+   "mean": -0.6385281385281345,
+   "wins": 0,
+   "ties": 1,
+   "losses": 2,
+   "p": 0.5
+  },
+  "fedsb/banking77": {
+   "n": 3,
+   "mean": 7.0346320346320335,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  },
+  "fedsb/all": {
+   "n": 3,
+   "mean": 7.0346320346320335,
+   "wins": 3,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.25
+  }
+ }
+}

@@ -9,7 +9,9 @@ main   Reads both sweeps, picks each method's rate per task (best mean of the la
        the random basis's), and writes the confirmation config: official held-out sets, seeds
        1001-1003, budgets 5% and 10%.
 
-Usage:  python scripts/make_web_configs.py dev
+scale  Banking77 with 50 clients at the 10% budget, rates from the ten-client sweep (client-count check).
+
+Usage:  python scripts/make_web_configs.py dev | scale
         python scripts/make_web_configs.py dev2 | main <dev results root>   (on the server)
 """
 
@@ -175,6 +177,28 @@ def main_config(dev_root: Path) -> None:
           f"5%/10%), each method at its swept rate: {json.dumps(picks, sort_keys=True)}")
 
 
+SCALE_CLIENTS = 50
+
+
+def scale_config() -> None:
+    """Banking77 with 50 clients, all taking part every round, at the 10% budget; every method keeps the
+    rate swept with ten clients (docs/results/web/web_lr_choice.json)."""
+    picks = json.loads((ROOT / "docs" / "results" / "web" / "web_lr_choice.json").read_text())["chosen"]
+    c = base_config(("banking77",))
+    c["project"]["output_dir"] = f"{SERVER}/docs/results/web_scale_main"
+    c["data"]["num_clients"] = SCALE_CLIENTS
+    c["data"]["clients_per_round"] = SCALE_CLIENTS
+    c["training"]["method_overrides"] = {
+        m: rates({"banking77": float(picks[source]["banking77"])}) for m, source in RATE_SOURCE.items()
+    }
+    c["communication"]["wire_ratios"] = [0.1]
+    c["matrix"]["dense_methods"] = ["fedavg_lora"]
+    c["matrix"]["sparse_methods"] = list(SPARSE)
+    c["project"]["expected_runs"] = 3 * (1 + len(SPARSE))
+    write("roberta_web_scale_main", c, f"Banking77 with {SCALE_CLIENTS} clients (full participation), 10% budget, "
+          "confirmation protocol; learning rates from the ten-client sweep.")
+
+
 if __name__ == "__main__":
     if sys.argv[1:2] == ["dev"]:
         dev()
@@ -182,5 +206,7 @@ if __name__ == "__main__":
         dev2(Path(sys.argv[2]))
     elif sys.argv[1:2] == ["main"] and len(sys.argv) == 3:
         main_config(Path(sys.argv[2]))
+    elif sys.argv[1:2] == ["scale"]:
+        scale_config()
     else:
         raise SystemExit(__doc__)
